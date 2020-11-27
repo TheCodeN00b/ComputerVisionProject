@@ -3,6 +3,9 @@ from enum import Enum
 
 import sys
 
+import torch.nn as nn
+import torch.optim as optim
+
 
 class Users(Enum):
     FRANC = "franc"
@@ -72,3 +75,7 @@ class Config:
         dataset_filepath = "C:/Users/franc/PycharmProjects/ComputerVisionProject/merged_dataset"
 
     classes = symbol_to_idx_len
+
+    # Training data
+    batch_size = 1
+    num_of_epochs = 3
