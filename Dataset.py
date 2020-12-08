@@ -8,6 +8,7 @@ from numpy import asarray
 from PIL import Image, ImageFilter
 
 import os
+import shutil
 
 import Config as Conf
 from Config import Config as Conf_var
@@ -19,82 +20,118 @@ import random
 
 import calendar
 import time
+
 ts = calendar.timegm(time.gmtime())
 
 # seed random number generator
 seed(ts)
 
 
+def build_dataset():
+    # creating data directories
+    os.mkdir('train_data')
+    os.mkdir('test_data')
+
+    # List of directories
+    dirs = os.listdir(Conf_var.train_dataset_filepath)
+    for directory in dirs:
+        print('Reading symbol ' + directory)
+        symbols = os.listdir(Conf_var.train_dataset_filepath + '/' + directory)
+
+        num_of_symbols = len(symbols)
+        random_indices = list(range(0, num_of_symbols))
+        random.shuffle(random_indices)
+
+        train_symbol_indices = random_indices[0: int(0.8 * num_of_symbols)]
+        test_symbol_indices = random_indices[int(0.8 * num_of_symbols): num_of_symbols]
+
+        # reading train data
+        for i in tqdm(range(len(train_symbol_indices))):
+            # copying the symbol to the new directory
+            symbol = symbols[train_symbol_indices[i]]
+            shutil.copy(Conf_var.train_dataset_filepath + '/' + directory + '/' + symbol, 'train_data/' + directory + '_' + str(i) + '.jpg')
+
+        # reading train data
+        for i in tqdm(range(len(test_symbol_indices))):
+            # copying the symbol to the new directory
+            symbol = symbols[test_symbol_indices[i]]
+            shutil.copy(Conf_var.train_dataset_filepath + '/' + directory + '/' + symbol, 'test_data/' + directory + '_' + str(i) + '.jpg')
+
+
+class MNISTDataset(Dataset):
+    def __init__(self, loader):
+        examples = enumerate(loader)
+        batch_idx, (data, targets) = next(examples)
+
+        self.data = data
+        self.targets = torch.zeros((targets.size()[0], Conf.Config.classes))
+
+        for i in tqdm(range(targets.size()[0])):
+            target = targets[i].tolist()
+            idx = Conf.symbol_to_idx[str(target)]
+            self.targets[i, idx] = 1
+
+    def __getitem__(self, item):
+        return self.data[item].to('cuda' if Conf.Config.use_cuda else 'cpu'), self.targets[item].to('cuda' if Conf.Config.use_cuda else 'cpu')
+
+    def __len__(self):
+        return len(self.data)
+
+    def shuffle(self):
+        indices = list(range(0, len(self.data)))
+        random.shuffle(indices)
+
+        for i in range(len(indices)):
+            self.data[i] = self.data[indices[i]]
+            self.targets[i] = self.targets[indices[i]]
+
+
 class SymbolsDataset(Dataset):
     def __init__(
             self,
-            frac=1.0
+            filepath
     ):
-        self.train = True
-
-        print('Reading dataset..')
-
-        # For each sample the system extracts a random number in [0, 1]. If greater then this value it will be used
-        # for the training, otherwise for the test
-        threshold = 0.2
+        print('Reading dataset at', filepath)
 
         data_transform = transforms.Compose([
             transforms.Grayscale(),
-            transforms.Resize((48, 48)),
+            transforms.Resize((Conf.Config.img_size, Conf.Config.img_size)),
             transforms.ToTensor(),
         ])
 
-        # Data tensors
-        self.train_symbol_images = torch.FloatTensor([])
-        self.train_labels = torch.FloatTensor([])
-
-        self.test_symbol_images = torch.FloatTensor([])
-        self.test_labels = torch.FloatTensor([])
-
         # List of directories
-        dirs = os.listdir(Conf_var.dataset_filepath)
+        symbols = os.listdir(filepath)
 
-        for directory in dirs:
-            print('Reading symbol ' + directory)
-            symbols = os.listdir(Conf_var.dataset_filepath + '/' + directory)
+        # Data tensors
+        self.data = torch.randn((len(symbols), 1, Conf.Config.img_size, Conf.Config.img_size))
+        self.labels = torch.randn((len(symbols), Conf.Config.classes))
 
-            num_of_symbols_in_dir = len(symbols)
-            num_of_symbols_to_take = int(num_of_symbols_in_dir * frac)
+        for i in tqdm(range(len(symbols))):
+            symbol_filepath = symbols[i]
+            symbol_name = symbol_filepath[0]
 
-            indices = random.sample(range(0, num_of_symbols_in_dir - 1), num_of_symbols_to_take)
+            try:
+                img_symbol = data_transform(Image.open(filepath + '/' + symbol_filepath)).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
 
-            for i in tqdm(range(num_of_symbols_to_take)):
-                symbol = symbols[indices[i]]
+                # it creates the vector for one-hot encoding
+                label_vector = torch.zeros((1, Conf_var.classes))
+                label_vector[:, Conf.symbol_to_idx[symbol_name]] = 1
 
-                if symbol[-4:] == '.jpg':
-                    # image symbol as a tensor
-                    img_symbol = data_transform(Image.open(Conf_var.dataset_filepath + '/' + directory + '/' + symbol)).view(1, 1, 48, 48)
+                self.data[i] = img_symbol
+                self.labels[i] = label_vector
+            except:
+                x = 1
 
-                    # it creates the vector for one-hot encoding
-                    label_vector = torch.zeros((1, Conf_var.classes))
-                    label_vector[:, Conf.symbol_to_idx[directory]] = 1
+    def __getitem__(self, item):
+        return self.data[item].to('cuda' if Conf.Config.use_cuda else 'cpu'), self.labels[item].to('cuda' if Conf.Config.use_cuda else 'cpu')
 
-                    # Random number is extracted
-                    coin = random.random()
-                    if coin > threshold:
-                        self.train_symbol_images = torch.cat((self.train_symbol_images, img_symbol), dim=0)
-                        self.train_labels = torch.cat((self.train_labels, label_vector), dim=0)
-                    else:
-                        self.test_symbol_images = torch.cat((self.test_symbol_images, img_symbol), dim=0)
-                        self.test_labels = torch.cat((self.test_labels, label_vector), dim=0)
+    def __len__(self):
+        return len(self.data)
 
-    def get_num_of_train_samples(self):
-        return len(self.train_symbol_images)
+    def shuffle(self):
+        indices = list(range(0, len(self.data)))
+        random.shuffle(indices)
 
-    def get_num_of_test_samples(self):
-        return len(self.test_symbol_images)
-
-    def get_train_samples(self, item):
-        return self.train_symbol_images[item], self.train_labels[item]
-
-    def get_test_samples(self, item):
-        return self.test_symbol_images[item], self.test_labels[item]
-
-    def info(self):
-        print('Train dataset length:', len(self.train_symbol_images))
-        print('Test dataset length:', len(self.test_symbol_images))
+        for i in range(len(indices)):
+            self.data[i] = self.data[indices[i]]
+            self.labels[i] = self.labels[indices[i]]

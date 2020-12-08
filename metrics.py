@@ -1,20 +1,22 @@
 import torch
 from Config import Config as Conf
-import Utils
+import Utils as utils
+
+
+def compute_one_hot_accuracy(target_labels: torch.FloatTensor, predicted_labels: torch.FloatTensor):
+    predicted_labels = utils.convert_model_output(predicted_labels)
+
+    predicted_classes = torch.argmax(predicted_labels, dim=1).to('cpu')
+    target_classes = torch.argmax(target_labels, dim=1).to('cpu')
+
+    correct = target_classes[target_classes == predicted_classes].size()[0]
+
+    return correct
 
 
 def compute_accuracy(target_labels: torch.FloatTensor, predicted_labels: torch.FloatTensor):
-    predicted_labels = Utils.convert_model_output(predicted_labels)
-    target_labels_indices = target_labels[:] == 1
-
     total = target_labels.size()[0]
-    true_positives = predicted_labels[target_labels_indices]
+    predicted = torch.argmax(predicted_labels, dim=1)
+    correct = target_labels[target_labels == predicted].size()[0]
 
-    correct = true_positives[true_positives == 1].size()[0]
-    accuracy = (correct / total) * 100
-
-    print()
-    print('Total:       ', total)
-    print('Correct:     ', correct)
-    print('---------------------')
-    print('Accuracy:    ', "{:0.4f}".format(accuracy) + '%')
+    return correct
