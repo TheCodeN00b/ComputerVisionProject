@@ -39,25 +39,29 @@ def resize_image(image, desired_size):
     return image
 
 
-def open_jpg_image(filepath):
+def open_jpg_image(filepath, bw):
     """
     The function opens an image, located in the specified filepath, and
     returns the matrix of the pixels.
 
     :param filepath: the image's filepath
-    :return: the pixel's matrix
+    :param bw: a boolean that if set to True opens the image and converts it to black and white
+    :return: the pixel's matrix, each pixel being a tuple, in a row-column order
     """
     image = Image.open(filepath)
-    image = image.convert('RGB')
 
-    return convert_pillowImage_to_matrixImage(image)
+    if bw:
+        image = image.convert('L')
+        return convert_pillowImage_to_BW_matrixImage(image)
+    else:
+        image = image.convert('RGB')
+        return convert_pillowImage_to_matrixImage(image)
 
 
 def save_jpg_image(filepath, pixels_matrix):
     """
     The function saves a matrix of pixels as a new image, in the
     specified filepath
-
     :param filepath: the output image's filepath
     :param pixels_matrix: the matrix which contains the pixels
     :param width: the width of the image
@@ -139,7 +143,7 @@ def convert_pillowImage_to_BW_matrixImage(pillowImage):
     for x in range(image_width):
         imported_col = []
         for y in range(image_height):
-            imported_col.append(tuple([pixels[x, y],pixels[x, y],pixels[x, y]]))
+            imported_col.append(tuple([pixels[y, x],pixels[y, x],pixels[y, x]]))
         imported_image.append(imported_col)
 
     return imported_image
