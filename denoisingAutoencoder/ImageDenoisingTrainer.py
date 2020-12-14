@@ -81,7 +81,7 @@ class ImageDenoisingTrainer:
                 # add the mini-batch training loss to epoch loss
                 epoch_loss += train_loss.item() * Conf.batch_size
 
-                # compute accumulated gradients
+                # compute the accumulated gradients
                 train_loss.backward()
 
                 # perform parameter update based on current gradients

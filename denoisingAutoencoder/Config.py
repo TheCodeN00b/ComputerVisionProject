@@ -24,7 +24,7 @@ class Config:
     a_plotPath = 'C:/Users/theje/PycharmProjects/ComputerVisionProject/plot/'
     DNet_phase = 'train'
     num_of_epochs = 50  # number of epochs
-    batch_size = 25
+    batch_size = 32
     dNet_learning_rate = 3e-4
     dNet_validation_split = 0.20
     dNet_skip_training = False

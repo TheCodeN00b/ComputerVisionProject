@@ -11,7 +11,6 @@ class DenoisingNetwork(nn.Module):
 
 
         # DECODER
-        # Convolutional layers and upsampling
         self.decoder = nn.Sequential()
 
 

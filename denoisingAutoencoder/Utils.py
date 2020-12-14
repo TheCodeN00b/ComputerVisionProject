@@ -84,7 +84,7 @@ def saveLossValue(loss, mode):
         f.close()
 
 
-# At each epoch we save the loss value in a file, here we restore those information to plot
+# At each epoch we save the loss value in a file.txt, here we restore those information to plot
 # This file is used specifically when we run the model on separate sessions
 def readRecordedLosses(type):
     # define empty list

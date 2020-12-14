@@ -13,7 +13,7 @@ from denoisingAutoencoder.Config import Config as Conf
 class DenoisingDataset(Dataset):
     """
     The class manages the images dataset. When it is created it reads from  a filepath a list of images which are read
-    and stored as a collection of images
+    and stored as a collection of tuple (noised_image, clean_image)
     """
 
     def __init__(

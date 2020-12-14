@@ -45,7 +45,7 @@ if __name__ == '__main__':
         trainer = ImageDenoisingTrainer(model, used_optimizer, train_set)
         trainer.trainAndValidate(start_epoch)
 
-    # Test the loaded model if you skip the training phase
+    # Test the loaded model if you decide to skip the training phase
     else:
         model, optimizer, epoch, loss = Utils.resumeFromCheckpoint()
         print('Denoising model was loaded from a checkpoint (trained on ' + str(epoch) + 'epoch, with loss: ' + str(loss))
