@@ -55,6 +55,27 @@ idx_to_symbol = {
     16: 'x'
 }
 
+
+class_names = [
+    '(',
+    ')',
+    '+',
+    '-',
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    'log',
+    'sqrt',
+    'x'
+]
+
 symbol_to_idx_len = len(symbol_to_idx.keys())
 idx_to_symbol_len = len(idx_to_symbol.keys())
 

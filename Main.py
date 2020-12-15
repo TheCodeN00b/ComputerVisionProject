@@ -25,7 +25,7 @@ def run_confusion_matrix_test(test_dataset):
     checkpoint = torch.load('model/symbol_detector.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
 
-    predicted_labels = torch.zeros(len(test_dataset), Conf.classes).to('cuda' if Conf.use_cuda else 'cpu')
+    predicted_labels = torch.zeros((len(test_dataset), Conf.classes)).to('cuda' if Conf.use_cuda else 'cpu')
     target_labels = torch.zeros(len(test_dataset)).to('cuda' if Conf.use_cuda else 'cpu')
 
     with torch.no_grad():
@@ -65,25 +65,28 @@ if __name__ == '__main__':
     # # train_dataset = MNISTDataset(train_loader)
     # # test_dataset = MNISTDataset(test_loader)
     #
-    # train_dataset = SymbolsDataset(Conf.train_dataset_filepath)
-    test_dataset = SymbolsDataset(Conf.test_dataset_filepath, size=20000)
+    train_dataset = SymbolsDataset(Conf.train_dataset_filepath, size=Conf.train_dataset_size)
+    train_dataset.balance_dataset()
+
+    test_dataset = SymbolsDataset(Conf.test_dataset_filepath, size=Conf.test_dataset_size)
+    test_dataset.balance_dataset()
     #
-    # # trans = transforms.ToPILImage()
-    # # img, target = train_dataset[0, 0]
-    # # trans(img.to('cpu')).show()
-    # # # trans(target.to('cpu')).show()
-    # # #
-    # model = Conv1DSymbolDetection()
-    # if Conf.use_cuda:
-    #     model.to('cuda')
-    #
-    # t.train_model(
-    #     train_dataset=train_dataset,
-    #     test_dataset=test_dataset,
-    #     model=model,
-    #     loss_func=nn.CrossEntropyLoss(),
-    #     optimizer=optim.SGD(lr=1e-3, params=model.parameters(), momentum=0.8)
-    # )
+    # trans = transforms.ToPILImage()
+    # img, target = train_dataset[0, 0]
+    # trans(img.to('cpu')).show()
+    # # trans(target.to('cpu')).show()
+    # #
+    model = Conv1DSymbolDetection()
+    if Conf.use_cuda:
+        model.to('cuda')
+
+    t.train_model(
+        train_dataset=train_dataset,
+        test_dataset=test_dataset,
+        model=model,
+        loss_func=nn.CrossEntropyLoss(),
+        optimizer=optim.SGD(lr=1e-3, params=model.parameters(), momentum=0.8)
+    )
     #
     # # trans = transforms.Compose([transforms.ToPILImage(), transforms.Normalize((-0.1307 * 0.229,), (-0.3081 * 0.299,))])
     # # img, target = train_dataset[0, 0]
@@ -98,4 +101,4 @@ if __name__ == '__main__':
     # # vis_graph = make_dot(out, params={**{'inputs': sample}, **dict(model.named_parameters())})
     # # vis_graph.view()
 
-    run_confusion_matrix_test(test_dataset)
+    # run_confusion_matrix_test(test_dataset)

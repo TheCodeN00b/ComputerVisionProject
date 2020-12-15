@@ -1,5 +1,6 @@
 import torch
 from Config import Config as Conf
+import Config
 import torch
 import matplotlib.pyplot as plt
 
@@ -52,7 +53,8 @@ def print_plot(plot_1, plot_2, labels, x_label, y_label, save=False, plot_filena
 
 
 def print_confusion_matrix(pred_labels, true_labels):
-    pred_labels = log_softmax(pred_labels)
+    softmax = torch.nn.functional.log_softmax(pred_labels, dim=1)
+    pred_labels = torch.argmax(softmax, dim=1)
 
     y_true_np = true_labels.to('cpu').numpy()
     y_pred_np = pred_labels.to('cpu').numpy()
@@ -67,6 +69,8 @@ def print_confusion_matrix(pred_labels, true_labels):
     # confusion_matrix = ConfusionMatrix(df['y_Actual'], df['y_Predicted'])
     # confusion_matrix.print_stats()
 
-    # sn.heatmap(confusion_matrix, annot=True)
-    # plt.show()
+    sn.heatmap(confusion_matrix, annot=True)
+    plt.show()
+
+    print(classification_report(y_true_np, y_pred_np, target_names=Config.class_names))
 
