@@ -99,8 +99,24 @@ def train_model(
                 'optimizer_state_dict': optimizer.state_dict(),
                 'reconstruction_loss': test_loss
             },
-                'model/symbol_detector.pt')
+                'model/symbol_detector_v2.pt')
             print('[VideoInterpolationTrainer] Saved model checkpoint')
 
-    utils.print_plot(train_losses, test_losses, ['Train loss', 'Test loss'], 'Epochs', 'Loss', 'loss_plot_balance')
-    utils.print_plot(train_acc_vec, test_acc_vec, ['Train accuracy', 'Test accuracy'], 'Epochs', 'Accuracy', 'accuracy_plot_balance')
+    utils.print_plot(
+        plot_1=train_losses,
+        plot_2=test_losses,
+        labels=['Train loss', 'Test loss'],
+        x_label='Epochs',
+        y_label='Loss',
+        plot_filename='loss_plot_balance_2',
+        save=True
+    )
+    utils.print_plot(
+        plot_1=train_acc_vec,
+        plot_2=test_acc_vec,
+        labels=['Train accuracy', 'Test accuracy'],
+        x_label='Epochs',
+        y_label='Accuracy',
+        plot_filename='accuracy_plot_balance_2',
+        save=True
+    )

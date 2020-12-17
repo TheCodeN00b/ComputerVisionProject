@@ -104,7 +104,7 @@ class SymbolsDataset(Dataset):
         ])
         self.new_img_transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.RandomRotation((-30, 30)),
+            transforms.RandomRotation((-15, 15)),
             transforms.ToTensor()
         ])
 
