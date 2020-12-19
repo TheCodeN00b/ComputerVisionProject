@@ -40,9 +40,6 @@ class Conv1DSymbolDetection(nn.Module):
             basic(Conf.hidden_4, Conf.hidden_5, 3),
             max_pool(),
 
-            basic(Conf.hidden_5, Conf.hidden_5, 3),
-            max_pool(),
-
             basic(Conf.hidden_5, Conf.flat_layer_features, 3),
             max_pool()
         )
@@ -66,18 +63,16 @@ class Conv1DSymbolDetection(nn.Module):
         return out_linear
 
 
-class ConvSymbolDetector(nn.Module):
+class Conv2DSymbolDetector(nn.Module):
     def __init__(self):
-        super(ConvSymbolDetector, self).__init__()
+        super(Conv2DSymbolDetector, self).__init__()
 
-        def conv_3_layer(in_channels, out_channels, kernel):
+        def basic(in_channels, out_channels, kernel):
             return nn.Sequential(
                 nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=kernel),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=kernel),
-                nn.ReLU(inplace=True),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.ReLU()
             )
 
         def max_pool():
@@ -86,30 +81,42 @@ class ConvSymbolDetector(nn.Module):
                 nn.ReLU()
             )
 
-        self.conv_module_1 = conv_3_layer(1, Conf.hidden_2, 3)
-        self.conv_module_2 = conv_3_layer(Conf.hidden_2, Conf.hidden_3, 3)
-        self.conv_module_3 = conv_3_layer(Conf.hidden_3, Conf.hidden_4, 3)
-        self.conv_module_4 = conv_3_layer(Conf.hidden_4, Conf.hidden_5, 3)
-        self.conv_module_5 = conv_3_layer(Conf.hidden_5, Conf.flat_layer_features, 2)
+        self.conv_module_1 = basic(1, Conf.hidden_1, 5)
+        self.pool_module_1 = max_pool()
+
+        self.conv_module_2 = basic(Conf.hidden_1, Conf.hidden_2, 3)
+        # self.pool_module_2 = max_pool()
+
+        self.conv_module_3 = basic(Conf.hidden_2, Conf.hidden_3, 3)
+        self.conv_module_4 = basic(Conf.hidden_3, Conf.hidden_4, 3)
+        self.conv_module_5 = basic(Conf.hidden_4, Conf.hidden_5, 3)
+        self.conv_module_6 = basic(Conf.hidden_5, Conf.flat_layer_features, 3)
+
+        self.flatten = nn.Flatten()
 
         self.linear = nn.Sequential(
             nn.Linear(in_features=Conf.flat_layer_features, out_features=Conf.hidden_3),
             nn.ReLU(),
             nn.Linear(in_features=Conf.hidden_3, out_features=Conf.hidden_1),
             nn.ReLU(),
-            nn.Linear(in_features=Conf.hidden_1, out_features=Conf.classes),
-            # nn.Sigmoid()
+            nn.Linear(in_features=Conf.hidden_1, out_features=Conf.classes)
         )
 
     def forward(self, x):
         module_1 = self.conv_module_1(x)
+        module_1 = self.pool_module_1(module_1)
+
         module_2 = self.conv_module_2(module_1)
+        # module_2 = self.pool_module_2(module_2)
+
         module_3 = self.conv_module_3(module_2)
         module_4 = self.conv_module_4(module_3)
         module_5 = self.conv_module_5(module_4)
+        module_6 = self.conv_module_6(module_5)
 
-        linear = f.interpolate(module_5, size=(1, 1))
+        linear = f.interpolate(module_6, size=(1, 1))
         linear = linear.view(x.size()[0], Conf.flat_layer_features)
+        linear = self.flatten(linear)
         linear = self.linear(linear)
 
         return linear

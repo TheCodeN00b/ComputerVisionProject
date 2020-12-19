@@ -16,13 +16,8 @@ import Trainer as t
 from tqdm import tqdm
 
 
-def run_confusion_matrix_test(test_dataset):
-    model = Conv1DSymbolDetection()
-
-    if Conf.use_cuda:
-        model.to('cuda')
-
-    checkpoint = torch.load('model/symbol_detector.pt')
+def run_confusion_matrix_test(test_dataset, model):
+    checkpoint = torch.load('model/' + Conf.symbol_detector_filename)
     model.load_state_dict(checkpoint['model_state_dict'])
 
     predicted_labels = torch.zeros((len(test_dataset), Conf.classes)).to('cuda' if Conf.use_cuda else 'cpu')
@@ -67,16 +62,18 @@ if __name__ == '__main__':
     #
     train_dataset = SymbolsDataset(Conf.train_dataset_filepath, size=Conf.train_dataset_size)
     train_dataset.balance_dataset()
+    train_dataset.print_info()
     #
     test_dataset = SymbolsDataset(Conf.test_dataset_filepath, size=Conf.test_dataset_size)
     test_dataset.balance_dataset()
+    test_dataset.print_info()
     # #
     # # trans = transforms.ToPILImage()
     # # img, target = train_dataset[0, 0]
     # # trans(img.to('cpu')).show()
     # # # trans(target.to('cpu')).show()
     # # #
-    model = Conv1DSymbolDetection()
+    model = Conv2DSymbolDetector()
     if Conf.use_cuda:
         model.to('cuda')
     #
@@ -85,7 +82,7 @@ if __name__ == '__main__':
         test_dataset=test_dataset,
         model=model,
         loss_func=nn.CrossEntropyLoss(),
-        optimizer=optim.SGD(lr=1e-4, params=model.parameters(), momentum=0.8)
+        optimizer=optim.SGD(lr=1e-3, params=model.parameters(), momentum=0.9)
     )
     #
     # # trans = transforms.Compose([transforms.ToPILImage(), transforms.Normalize((-0.1307 * 0.229,), (-0.3081 * 0.299,))])
@@ -101,4 +98,4 @@ if __name__ == '__main__':
     # # vis_graph = make_dot(out, params={**{'inputs': sample}, **dict(model.named_parameters())})
     # # vis_graph.view()
 
-    run_confusion_matrix_test(test_dataset)
+    run_confusion_matrix_test(test_dataset, model)
