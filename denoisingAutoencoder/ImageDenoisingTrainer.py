@@ -39,7 +39,7 @@ class ImageDenoisingTrainer:
         train_loader, validation_loader = self.splitDataset()
 
         print("train set size: " + str(len(train_loader.sampler)))
-        print("validation set size: " + str(len(validation_loader.sampler)))
+        print("validation set size: " + str(len(validation_loader.sampler)) + "\n")
 
         # the used loss function
         mse = nn.MSELoss().cuda() if Conf.use_gpu else nn.MSELoss()
@@ -56,16 +56,14 @@ class ImageDenoisingTrainer:
             "### TRAINING ###"
             for data in enumerate(train_loader):
                 # we read the image from data that has the form of (step, frame) tuple
-                noised_image, expected_output = data[1]
-                noised_image = Variable(noised_image).numpy()
-
-                # We normalize the image with noise
-                grey_noised_image = normalizeSample(noised_image, 'train')
+                tuple = data[1]
+                noised_image = tuple[0].to(Utils.getUsedDevice())
+                expected_output = tuple[1].to(Utils.getUsedDevice())
 
                 self.optimizer.zero_grad()  # the optimizer is reset
 
                 # Train on the selected sample 'grey_denoised_image'
-                clean_reconstructed = self.model(grey_noised_image)
+                clean_reconstructed = self.model(noised_image)
 
                 # reconstruction error between the clean expected image (target) and the reconstructed one
                 train_loss = loss_function(clean_reconstructed, expected_output)
@@ -116,14 +114,13 @@ class ImageDenoisingTrainer:
 
         for data in enumerate(validation_loader):
 
-            noised_image, expected_output = data[1]
-            noised_image = Variable(noised_image).numpy()
-
-            # We normalize the image with noise
-            grey_noised_image = normalizeSample(noised_image, 'train')
+            # we read the image from data that has the form of (step, frame) tuple
+            tuple = data[1]
+            noised_image = tuple[0].to(Utils.getUsedDevice())
+            expected_output = tuple[1].to(Utils.getUsedDevice())
 
             # Train on the selected sample 'grey_denoised_image'
-            clean_reconstructed = self.model(grey_noised_image)
+            clean_reconstructed = self.model(noised_image)
 
             # reconstruction error between the clean expected image (target) and the reconstructed one
             validation_loss = loss_function(clean_reconstructed, expected_output)
@@ -160,3 +157,72 @@ class ImageDenoisingTrainer:
 
         # display the epoch training loss
         print("validation loss = {:.6f}".format(epoch_loss) + "\n")
+
+        "We define a random seed to manage samples shuffle and we split the " \
+        "dataset into train and validation according with the declared validation size"
+
+        def splitDataset(self):
+
+            # Creating data indices for training and validation splits:
+            random_seed = 42  # seed to randomly shuffle the dataset
+            dataset_size = len(self.dataset)
+            indices = list(range(dataset_size))
+
+            split = int(np.floor(Conf.cNet_validation_split * dataset_size))
+
+            # indices shuffle
+            np.random.seed(random_seed)
+            np.random.shuffle(indices)
+            train_indices, val_indices = indices[split:], indices[:split]
+
+            augmentedTrainIndexes = list()
+            # replace each original training item with two augmented variations
+            for index in train_indices:
+                originalItem = self.dataset.__getitem__(index)
+                newItem0, newItem1 = self.dataset.augmentItem(originalItem, index)
+
+                # add the two variation indexes to add them to the final train loader
+                # using the train sampler
+                augmentedTrainIndexes.append(newItem0)
+                augmentedTrainIndexes.append(newItem1)
+
+            # Creating PT data samplers and loaders:
+            train_sampler = SubsetRandomSampler(augmentedTrainIndexes)
+            valid_sampler = SubsetRandomSampler(val_indices)
+
+            # build the augmented train loader and the normal validation loader
+            train_loader = torch.utils.data.DataLoader(self.dataset, batch_size=Conf.batch_size, sampler=train_sampler,
+                                                       num_workers=4, pin_memory=True)
+            validation_loader = torch.utils.data.DataLoader(self.dataset, batch_size=Conf.batch_size,
+                                                            sampler=valid_sampler, num_workers=4, pin_memory=True)
+
+            # return train and validation iterator for the learning phase
+            return train_loader, validation_loader
+
+
+    "We define a random seed to manage samples shuffle and we split the " \
+    "dataset into train and validation according with the declared validation size"
+    def splitDataset(self):
+
+        # Creating data indices for training and validation splits:
+        random_seed = 42  # seed to randomly shuffle the dataset
+        dataset_size = len(self.dataset)
+        indices = list(range(dataset_size))
+
+        split = int(np.floor(Conf.dNet_validation_split * dataset_size))
+
+        # indices shuffle
+        np.random.seed(random_seed)
+        np.random.shuffle(indices)
+        train_indices, val_indices = indices[split:], indices[:split]
+
+        # Creating PT data samplers and loaders:
+        train_sampler = SubsetRandomSampler(train_indices)
+        valid_sampler = SubsetRandomSampler(val_indices)
+
+        # build the augmented train loader and the normal validation loader
+        train_loader = torch.utils.data.DataLoader(self.dataset, batch_size=Conf.batch_size, sampler=train_sampler, num_workers=4, pin_memory=True)
+        validation_loader = torch.utils.data.DataLoader(self.dataset, batch_size=Conf.batch_size, sampler=valid_sampler, num_workers=4, pin_memory=True)
+
+        # return train and validation iterator for the learning phase
+        return train_loader, validation_loader

@@ -3,40 +3,45 @@ import torch.optim as optim
 
 from denoisingAutoencoder import Utils
 from denoisingAutoencoder.DenoisingNetwork import DenoisingNetwork
-from denoisingAutoencoder.Utils import saveOutput, normalizeSample, getUsedDevice
+from denoisingAutoencoder.Utils import saveOutput, normalizeSample, getUsedDevice, cleanOutputDirectory
 from denoisingAutoencoder.ImageDenoisingTrainer import ImageDenoisingTrainer
 from denoisingAutoencoder.Dataset import DenoisingDataset
 from denoisingAutoencoder.Config import Config as Conf
 
 if __name__ == '__main__':
 
+    # We delete the last generated dataset if is required to generate a new one
+    # At any run, we delete each reconstructed output in the results directory
+    cleanOutputDirectory()
+
     """
     -----------------------------------------------
     TRAINING PHASE
     -----------------------------------------------
     """
-    if not Conf.cNet_skip_training:
+    if not Conf.dNet_skip_training:
 
         # we read the train_set by loading it from the dataset directory
         train_set = DenoisingDataset(Conf.a_datasetPath + 'train_images')
 
-        print("\n##### Training the colorization autoencoder #####\n")
-
-        # Train the model and save it in the project directory
-
         # INSTANTIATING THE AUTOENCODER
         model = DenoisingNetwork().to(getUsedDevice())
+        Utils.showDeviceUsage(model)
+
+        print("##### Training the denoising autoencoder #####\n")
+
+        # Train the model and save it in the project directory
 
         # if we resume an old checkpoint, we will start from a specific epoch of a previous run
         # and we have to resume even the same optimizer
         start_epoch = 0
 
-        Adam = optim.Adam(model.parameters(), lr=Conf.cNet_learning_rate, weight_decay=3e-4)
-        SGD = optim.SGD(model.parameters(), lr=Conf.cNet_learning_rate, momentum=0.96)
+        Adam = optim.Adam(model.parameters(), lr=Conf.dNet_learning_rate, weight_decay=3e-4)
+        SGD = optim.SGD(model.parameters(), lr=Conf.dNet_learning_rate, momentum=0.96)
         used_optimizer = SGD
 
         # if we want to continue a previous uncompleted training
-        if Conf.cNet_resumeTraining:
+        if Conf.dNet_resumeTraining:
             model, optimizer, start_epoch, loss = Utils.resumeFromCheckpoint()
             print('Finished loading checkpoint. Resuming from epoch ' + str(start_epoch) + ' with loss: ' + str(loss))
             print('The model will be trained on other ' + str(Conf.num_of_epochs) + ' epochs:')

@@ -36,7 +36,19 @@ def getUsedDevice():
 
 # remove the temporary output generated in the reconstruction directory
 def cleanOutputDirectory():
-    return 0
+    if not (Conf.dNet_resumeTraining or Conf.dNet_skip_training):
+        # we delete the output files content with information about each epoch if we are not resuming the training
+        file = open(Conf.a_modelsPath + "train_losses.txt", "r+")
+        file.truncate(0)
+        file.close()
+        file = open(Conf.a_modelsPath + "validation_losses.txt", "r+")
+        file.truncate(0)
+        file.close()
+
+    print('[Main] Deleting previous reconstructed frames')
+    frames = os.listdir(Conf.a_datasetPath + 'reconstruction_results/')
+    for frame in frames:
+        os.remove(Conf.a_datasetPath + 'reconstruction_results/' + frame)
 
 # Normalize and convert the dataset samples and return the model input
 def normalizeSample(sample, caller):
@@ -47,12 +59,24 @@ def normalizeSample(sample, caller):
 # save the reconstructed_image versus original_image output for DenoisingNetwork
 def saveOutput(reconstructed_image, expected_image, mode, count):
 
+    reconstructed_image = reconstructed_image.cpu().detach().numpy()
+    expected_image = expected_image.cpu().detach().numpy()
+
     # save the reconstructed versus original output plot for the sample
     plt.imsave(Conf.a_datasetPath + 'reconstruction_results/' + mode + str(count) + " _reconstructed_image.png", reconstructed_image)
     plt.imsave(Conf.a_datasetPath + 'reconstruction_results/' + mode + str(count) + "_expected_image.png", expected_image)
 
     torch.cuda.empty_cache()
 
+# save the passed image
+def print_image(image):
+
+    #image = image.cpu().detach().numpy()
+
+    # save the reconstructed versus original output plot for the sample
+    plt.imsave(Conf.a_datasetPath + 'reconstruction_results/print_image.png', image)
+
+    torch.cuda.empty_cache()
 
 # We resume the trained model from the last checkpoint
 def resumeFromCheckpoint():
