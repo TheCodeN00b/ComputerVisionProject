@@ -55,6 +55,27 @@ idx_to_symbol = {
     16: 'x'
 }
 
+
+class_names = [
+    '(',
+    ')',
+    '+',
+    '-',
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    'log',
+    'sqrt',
+    'x'
+]
+
 symbol_to_idx_len = len(symbol_to_idx.keys())
 idx_to_symbol_len = len(idx_to_symbol.keys())
 
@@ -75,21 +96,23 @@ class Config:
         train_dataset_filepath = "C:/Users/franc/PycharmProjects/ComputerVisionProject/train_data"
         test_dataset_filepath = "C:/Users/franc/PycharmProjects/ComputerVisionProject/test_data"
 
+    symbol_detector_filename = 'symbol_detector_conv2d.pt'
     use_cuda = True
 
     classes = symbol_to_idx_len
     img_size = 28
-    train_dataset_size = 30 * 1000
+    train_dataset_size = 100 * 1000
     test_dataset_size = int(0.2 * train_dataset_size)
 
     # Training data
     batch_size = 64
-    num_of_epochs = 20
+    num_of_epochs = 30
 
     # model data
-    hidden_1 = 32
-    hidden_2 = 64
-    hidden_3 = 128
-    hidden_4 = 256
-    hidden_5 = 512
-    flat_layer_features = 1024
+    hidden_1 = 16
+    hidden_2 = 32
+    hidden_3 = 64
+    hidden_4 = 128
+    hidden_5 = 256
+    hidden_6 = 1024
+    flat_layer_features = 512

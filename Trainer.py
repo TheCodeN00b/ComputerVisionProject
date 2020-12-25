@@ -29,7 +29,9 @@ def train_model(
     test_acc_vec = []
 
     prev_train_loss = float("inf")
+    prev_train_acc = 0
     prev_test_loss = float("inf")
+    prev_test_acc = 0
 
     for epoch in range(Config.num_of_epochs):
         train_dataset.shuffle()
@@ -84,10 +86,25 @@ def train_model(
 
         print()
         print('------------------------------------------')
-        print('Average train loss:      ', "{:.04f}".format(avg_train_loss))
-        print('Average train acc:       ', "{:.04f}%".format(train_acc))
-        print('Average test loss:       ', "{:.04f}".format(avg_test_loss))
-        print('Average test acc:        ', "{:.04f}%".format(test_acc))
+        print(
+            'Average train loss:      ', "{:.04f}".format(avg_train_loss).rjust(7),
+            '  Prev loss: ', '{:0.4f}'.format(prev_train_loss).rjust(7),
+            '  Delta:   ', '{:.04f}'.format(avg_train_loss - prev_train_loss).rjust(7))
+        print(
+            'Average train acc:       ', "{:.02f}%".format(train_acc).rjust(7),
+            '  Prev acc:  ', '{:0.2f}'.format(prev_train_acc).rjust(7),
+            '  Delta:   ', '{:.02f}'.format(train_acc - prev_train_acc).rjust(7))
+        print(
+            'Average test loss:       ', "{:.04f}".format(avg_test_loss).rjust(7),
+            '  Prev loss: ', '{:0.4f}'.format(prev_train_loss).rjust(7),
+            '  Delta:   ', '{:.04f}'.format(avg_test_loss - prev_test_loss).rjust(7))
+        print(
+            'Average test acc:        ', "{:.02f}%".format(test_acc).rjust(7),
+            '  Prev acc:  ', '{:0.2f}'.format(prev_test_acc).rjust(7),
+            '  Delta:   ', '{:.02f}'.format(test_acc - prev_test_acc).rjust(7))
+
+        prev_train_acc = train_acc
+        prev_test_acc = test_acc
 
         if avg_train_loss < prev_train_loss and avg_test_loss < prev_test_loss:
             prev_train_loss = avg_train_loss
@@ -99,8 +116,24 @@ def train_model(
                 'optimizer_state_dict': optimizer.state_dict(),
                 'reconstruction_loss': test_loss
             },
-                'model/symbol_detector.pt')
+                'model/' + Config.symbol_detector_filename)
             print('[VideoInterpolationTrainer] Saved model checkpoint')
 
-    utils.print_plot_from_file(train_losses, test_losses, ['Train loss', 'Test loss'], 'Epochs', 'Loss')
-    utils.print_plot_from_file(train_acc_vec, test_acc_vec, ['Train accuracy', 'Test accuracy'], 'Epochs', 'Accuracy')
+    utils.print_plot(
+        plot_1=train_losses,
+        plot_2=test_losses,
+        labels=['Train loss', 'Test loss'],
+        x_label='Epochs',
+        y_label='Loss',
+        plot_filename='loss_plot_conv2d_balance',
+        save=True
+    )
+    utils.print_plot(
+        plot_1=train_acc_vec,
+        plot_2=test_acc_vec,
+        labels=['Train accuracy', 'Test accuracy'],
+        x_label='Epochs',
+        y_label='Accuracy',
+        plot_filename='accuracy_plot_conv2d_balance',
+        save=True
+    )
