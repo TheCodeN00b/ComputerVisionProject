@@ -1,6 +1,5 @@
-import torch
-from Config import Config as Conf
-import Config
+from model.Config import Config as Conf
+from model import Config
 import torch
 import matplotlib.pyplot as plt
 

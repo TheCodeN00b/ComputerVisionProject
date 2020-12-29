@@ -93,10 +93,10 @@ if symbol_to_idx_len != idx_to_symbol_len:
 @dataclass()
 class Config:
     if user == Users.FRANC:
-        train_dataset_filepath = "C:/Users/franc/PycharmProjects/ComputerVisionProject/train_data"
-        test_dataset_filepath = "C:/Users/franc/PycharmProjects/ComputerVisionProject/test_data"
+        train_dataset_filepath = "/train_data"
+        test_dataset_filepath = "/test_data"
 
-    symbol_detector_filename = 'symbol_detector_conv2d.pt'
+    symbol_detector_filename = 'model_checkpoint/symbol_detector_conv2d.pt'
     use_cuda = True
 
     classes = symbol_to_idx_len
@@ -108,7 +108,7 @@ class Config:
     batch_size = 64
     num_of_epochs = 40
 
-    # model data
+    # model_checkpoint data
     hidden_1 = 16
     hidden_2 = 32
     hidden_3 = 64

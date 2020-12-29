@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
         print("##### Training the denoising autoencoder #####\n")
 
-        # Train the model and save it in the project directory
+        # Train the model_checkpoint and save it in the project directory
 
         # if we resume an old checkpoint, we will start from a specific epoch of a previous run
         # and we have to resume even the same optimizer
@@ -44,16 +44,16 @@ if __name__ == '__main__':
         if Conf.dNet_resumeTraining:
             model, optimizer, start_epoch, loss = Utils.resumeFromCheckpoint()
             print('Finished loading checkpoint. Resuming from epoch ' + str(start_epoch) + ' with loss: ' + str(loss))
-            print('The model will be trained on other ' + str(Conf.num_of_epochs) + ' epochs:')
+            print('The model_checkpoint will be trained on other ' + str(Conf.num_of_epochs) + ' epochs:')
 
-        # Call the trainer with the DenoisingNetwork model and the specified optimizer and our dataset
+        # Call the trainer with the DenoisingNetwork model_checkpoint and the specified optimizer and our dataset
         trainer = ImageDenoisingTrainer(model, used_optimizer, train_set)
         trainer.trainAndValidate(start_epoch)
 
-    # Test the loaded model if you decide to skip the training phase
+    # Test the loaded model_checkpoint if you decide to skip the training phase
     else:
         model, optimizer, epoch, loss = Utils.resumeFromCheckpoint()
-        print('Denoising model was loaded from a checkpoint (trained on ' + str(epoch) + 'epoch, with loss: ' + str(loss))
+        print('Denoising model_checkpoint was loaded from a checkpoint (trained on ' + str(epoch) + 'epoch, with loss: ' + str(loss))
 
     # We read all the recorded losses and we plot the entire curve
     Utils.plotLosses(Utils.readRecordedLosses('train'), Utils.readRecordedLosses('validation'))

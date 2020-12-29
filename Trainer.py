@@ -116,8 +116,8 @@ def train_model(
                 'optimizer_state_dict': optimizer.state_dict(),
                 'reconstruction_loss': test_loss
             },
-                'model/' + Config.symbol_detector_filename)
-            print('[VideoInterpolationTrainer] Saved model checkpoint')
+                'model_checkpoint/' + Config.symbol_detector_filename)
+            print('[VideoInterpolationTrainer] Saved model_checkpoint checkpoint')
 
     utils.print_plot(
         plot_1=train_losses,

@@ -1,17 +1,14 @@
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
-import torch.nn.functional as f
 
-import numpy as np
-from numpy import asarray
-from PIL import Image, ImageFilter
+from PIL import Image
 
 import os
 import shutil
 
-import Config as Conf
-from Config import Config as Conf_var
+from model import Config as Conf
+from model.Config import Config as Conf_var
 from tqdm import tqdm
 
 from random import seed

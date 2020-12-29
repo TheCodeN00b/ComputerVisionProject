@@ -1,6 +1,6 @@
 from Dataset import *
-from Config import Config as Conf
-from Model import *
+from model.Config import Config as Conf
+from model.Model import *
 
 import torch
 import torchvision
@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 
 def run_confusion_matrix_test(test_dataset, model):
-    checkpoint = torch.load('model/' + Conf.symbol_detector_filename)
+    checkpoint = torch.load(Conf.symbol_detector_filename)
     model.load_state_dict(checkpoint['model_state_dict'])
 
     predicted_labels = torch.zeros((len(test_dataset), Conf.classes)).to('cuda' if Conf.use_cuda else 'cpu')
@@ -31,7 +31,7 @@ def run_confusion_matrix_test(test_dataset, model):
             predicted_labels[i] = out
             target_labels[i] = target
 
-    utils.print_confusion_matrix(predicted_labels, target_labels)
+    u.print_confusion_matrix(predicted_labels, target_labels)
 
 
 if __name__ == '__main__':
@@ -58,8 +58,8 @@ if __name__ == '__main__':
     )
 
     # # sample, targets = train_dataset[0: 2]
-    # # out = model(sample)
-    # # vis_graph = make_dot(out, params={**{'inputs': sample}, **dict(model.named_parameters())})
+    # # out = model_checkpoint(sample)
+    # # vis_graph = make_dot(out, params={**{'inputs': sample}, **dict(model_checkpoint.named_parameters())})
     # # vis_graph.view()
 
     run_confusion_matrix_test(test_dataset, model)

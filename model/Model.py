@@ -1,9 +1,9 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as f
+import torch as torch
 
-from Config import Config as Conf
-import Utils as utils
+from model.Config import Config as Conf
+from model import Config as Config
 
 
 class Conv1DSymbolDetection(nn.Module):
@@ -85,8 +85,6 @@ class Conv2DSymbolDetector(nn.Module):
         self.pool_module_1 = max_pool()
 
         self.conv_module_2 = basic(Conf.hidden_1, Conf.hidden_2, 3)
-        # self.pool_module_2 = max_pool()
-
         self.conv_module_3 = basic(Conf.hidden_2, Conf.hidden_3, 3)
         self.conv_module_4 = basic(Conf.hidden_3, Conf.hidden_4, 3)
         self.conv_module_5 = basic(Conf.hidden_4, Conf.hidden_5, 3)
@@ -102,13 +100,29 @@ class Conv2DSymbolDetector(nn.Module):
             nn.Linear(in_features=Conf.hidden_1, out_features=Conf.classes)
         )
 
+    def predict_image(self, x):
+        module_1 = self.conv_module_1(x)
+        module_1 = self.pool_module_1(module_1)
+
+        module_2 = self.conv_module_2(module_1)
+        module_3 = self.conv_module_3(module_2)
+        module_4 = self.conv_module_4(module_3)
+        module_5 = self.conv_module_5(module_4)
+        module_6 = self.conv_module_6(module_5)
+
+        linear = f.interpolate(module_6, size=(1, 1))
+        linear = linear.view(x.size()[0], Conf.flat_layer_features)
+        linear = self.flatten(linear)
+        linear = self.linear(linear)
+
+        arg_max = torch.argmax(nn.functional.log_softmax(linear, dim=1), dim=1)
+        return Config.idx_to_symbol[arg_max]
+
     def forward(self, x):
         module_1 = self.conv_module_1(x)
         module_1 = self.pool_module_1(module_1)
 
         module_2 = self.conv_module_2(module_1)
-        # module_2 = self.pool_module_2(module_2)
-
         module_3 = self.conv_module_3(module_2)
         module_4 = self.conv_module_4(module_3)
         module_5 = self.conv_module_5(module_4)
