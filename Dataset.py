@@ -64,12 +64,12 @@ class MNISTDataset(Dataset):
         batch_idx, (data, targets) = next(examples)
 
         self.data = data
-        self.targets = torch.zeros((targets.size()[0], Conf.Config.classes))
+        self.targets = torch.zeros((len(data)))
 
         for i in tqdm(range(targets.size()[0])):
             target = targets[i].tolist()
             idx = Conf.symbol_to_idx[str(target)]
-            self.targets[i, idx] = 1
+            self.targets[i] = idx
 
     def __getitem__(self, item):
         return self.data[item].to('cuda' if Conf.Config.use_cuda else 'cpu'), self.targets[item].to('cuda' if Conf.Config.use_cuda else 'cpu')
@@ -120,7 +120,6 @@ class SymbolsDataset(Dataset):
 
         for i in tqdm(range(len(indices))):
             symbol_filepath = symbols[indices[i]]
-            symbol_name = ''
             if 'log' in symbol_filepath:
                 symbol_name = 'log'
             elif 'sqrt' in symbol_filepath:
@@ -131,13 +130,9 @@ class SymbolsDataset(Dataset):
             try:
                 img_symbol = data_transform(Image.open(filepath + '/' + symbol_filepath)).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
 
-                # # it creates the vector for one-hot encoding
-                # label_vector = torch.zeros((1, Conf_var.classes))
-                # label_vector[:, Conf.symbol_to_idx[symbol_name]] = 1
-
                 self.data[i] = img_symbol
                 self.labels[i] = Conf.symbol_to_idx[symbol_name]
-            except:
+            except Exception as e:
                 x = 1
 
     def __getitem__(self, item):
@@ -153,7 +148,7 @@ class SymbolsDataset(Dataset):
 
         # finds the most popular class
         for label in Conf.class_names:
-            num_of_elements = (self.labels == Conf.symbol_to_idx[label]).nonzero().size()[0]
+            num_of_elements = self.labels[self.labels == Conf.symbol_to_idx[label]].size()[0]
             if num_of_elements > max_number_of_elements:
                 max_number_of_elements = num_of_elements
                 most_frequent_class = label
@@ -161,14 +156,14 @@ class SymbolsDataset(Dataset):
         # finds classes to upsamples
         for label in Conf.class_names:
             if label != most_frequent_class:
-                num_of_elements = (self.labels == Conf.symbol_to_idx[label]).nonzero().size()[0]
+                num_of_elements = self.labels[self.labels == Conf.symbol_to_idx[label]].size()[0]
                 fraction = num_of_elements / max_number_of_elements
 
                 if fraction < 1 / 2:
                     classes_to_upsample.append(label)
 
         for label in classes_to_upsample:
-            label_elements = (self.labels == Conf.symbol_to_idx[label]).nonzero()
+            label_elements = self.labels[self.labels == Conf.symbol_to_idx[label]]
             num_of_elements = label_elements.size()[0]
             elements_to_add = max_number_of_elements - num_of_elements
 
@@ -209,20 +204,20 @@ class SymbolsDataset(Dataset):
     def print_info(self):
         print('Dataset info')
         print('------------------------------------')
-        print('# of images of 0:        ', (self.labels == Conf.symbol_to_idx['0']).nonzero().size()[0])
-        print('# of images of 1:        ', (self.labels == Conf.symbol_to_idx['1']).nonzero().size()[0])
-        print('# of images of 2:        ', (self.labels == Conf.symbol_to_idx['2']).nonzero().size()[0])
-        print('# of images of 3:        ', (self.labels == Conf.symbol_to_idx['3']).nonzero().size()[0])
-        print('# of images of 4:        ', (self.labels == Conf.symbol_to_idx['4']).nonzero().size()[0])
-        print('# of images of 5:        ', (self.labels == Conf.symbol_to_idx['5']).nonzero().size()[0])
-        print('# of images of 6:        ', (self.labels == Conf.symbol_to_idx['6']).nonzero().size()[0])
-        print('# of images of 7:        ', (self.labels == Conf.symbol_to_idx['7']).nonzero().size()[0])
-        print('# of images of 8:        ', (self.labels == Conf.symbol_to_idx['8']).nonzero().size()[0])
-        print('# of images of 9:        ', (self.labels == Conf.symbol_to_idx['9']).nonzero().size()[0])
-        print('# of images of log:      ', (self.labels == Conf.symbol_to_idx['log']).nonzero().size()[0])
-        print('# of images of sqrt:     ', (self.labels == Conf.symbol_to_idx['sqrt']).nonzero().size()[0])
-        print('# of images of x:        ', (self.labels == Conf.symbol_to_idx['x']).nonzero().size()[0])
-        print('# of images of (:        ', (self.labels == Conf.symbol_to_idx['(']).nonzero().size()[0])
-        print('# of images of ):        ', (self.labels == Conf.symbol_to_idx[')']).nonzero().size()[0])
+        print('# of images of 0:        ', self.labels[self.labels == Conf.symbol_to_idx['0']].size()[0])
+        print('# of images of 1:        ', self.labels[self.labels == Conf.symbol_to_idx['1']].size()[0])
+        print('# of images of 2:        ', self.labels[self.labels == Conf.symbol_to_idx['2']].size()[0])
+        print('# of images of 3:        ', self.labels[self.labels == Conf.symbol_to_idx['3']].size()[0])
+        print('# of images of 4:        ', self.labels[self.labels == Conf.symbol_to_idx['4']].size()[0])
+        print('# of images of 5:        ', self.labels[self.labels == Conf.symbol_to_idx['5']].size()[0])
+        print('# of images of 6:        ', self.labels[self.labels == Conf.symbol_to_idx['6']].size()[0])
+        print('# of images of 7:        ', self.labels[self.labels == Conf.symbol_to_idx['7']].size()[0])
+        print('# of images of 8:        ', self.labels[self.labels == Conf.symbol_to_idx['8']].size()[0])
+        print('# of images of 9:        ', self.labels[self.labels == Conf.symbol_to_idx['9']].size()[0])
+        print('# of images of log:      ', self.labels[self.labels == Conf.symbol_to_idx['log']].size()[0])
+        print('# of images of sqrt:     ', self.labels[self.labels == Conf.symbol_to_idx['sqrt']].size()[0])
+        print('# of images of x:        ', self.labels[self.labels == Conf.symbol_to_idx['x']].size()[0])
+        print('# of images of (:        ', self.labels[self.labels == Conf.symbol_to_idx['(']].size()[0])
+        print('# of images of ):        ', self.labels[self.labels == Conf.symbol_to_idx[')']].size()[0])
         print('------------------------------------')
         print('Total number of elements:', len(self.data))

@@ -39,8 +39,8 @@ def print_plot(plot_1, plot_2, labels, x_label, y_label, save=False, plot_filena
     """
     epochs = [i + 1 for i in range(len(plot_1))]
 
-    plt.plot(epochs, plot_1, color='red', label=labels[0])
-    plt.plot(epochs, plot_2, color='blue', label=labels[1])
+    plt.plot(epochs, plot_1, '-ok', color='red', label=labels[0], markersize=2)
+    plt.plot(epochs, plot_2, '-ok', color='blue', label=labels[1], markersize=2)
     plt.legend()
     plt.xlabel(x_label)
     plt.ylabel(y_label)

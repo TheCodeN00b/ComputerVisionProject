@@ -106,7 +106,7 @@ class Config:
 
     # Training data
     batch_size = 64
-    num_of_epochs = 30
+    num_of_epochs = 40
 
     # model data
     hidden_1 = 16
