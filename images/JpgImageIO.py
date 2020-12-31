@@ -114,11 +114,11 @@ def convert_pillowImage_to_matrixImage(pillowImage):
     image_height = pillowImage.size[0]
 
     imported_image = []
-    for x in range(image_width):
-        imported_col = []
-        for y in range(image_height):
-            imported_col.append(tuple(pixels[y, x]))
-        imported_image.append(imported_col)
+    for y in range(image_height):
+        imported_row = []
+        for x in range(image_width):
+            imported_row.append(tuple(pixels[x, y]))
+        imported_image.append(imported_row)
 
     return imported_image
 
@@ -140,10 +140,45 @@ def convert_pillowImage_to_BW_matrixImage(pillowImage):
     image_height = pillowImage.size[1]
 
     imported_image = []
-    for x in range(image_width):
-        imported_col = []
-        for y in range(image_height):
-            imported_col.append(tuple([pixels[y, x],pixels[y, x],pixels[y, x]]))
-        imported_image.append(imported_col)
+    for y in range(image_height):
+        imported_row = []
+        for x in range(image_width):
+            imported_row.append(tuple(([pixels[x, y],pixels[x, y],pixels[x, y]])))
+        imported_image.append(imported_row)
 
     return imported_image
+
+
+def create_image_from_symbol_pixels_list(image, symbol_pixels):
+    left_most = symbol_pixels[0]
+    top_most = symbol_pixels[0]
+    right_most = symbol_pixels[0]
+    bottom_most = symbol_pixels[0]
+
+    for pixel in symbol_pixels:
+        if pixel[0] < left_most[0]:
+            left_most = pixel
+        elif pixel[0] > right_most[0]:
+            right_most = pixel
+        if pixel[1] < top_most[1]:
+            top_most = pixel
+        elif pixel[1] > bottom_most[1]:
+            bottom_most = pixel
+
+    padding = 10
+    width = right_most[0] - left_most[0] + padding
+    height = bottom_most[1] - top_most[1] + padding
+    normalization_pixel = (left_most[0], top_most[1])
+
+    symbol_img = Image.new('L', (width, height), color=255)
+    pixels = symbol_img.load()
+    for pixel in symbol_pixels:
+        normalized_pixel = __normalize_pixel(normalization_pixel, padding, pixel)
+        pixels[normalized_pixel[0], normalized_pixel[1]] = 0
+
+    return convert_pillowImage_to_BW_matrixImage(symbol_img)
+
+
+def __normalize_pixel(normalization_pixel, padding, pixel):
+    return tuple((pixel[0] - normalization_pixel[0] + padding / 2, pixel[1] - normalization_pixel[1] + padding / 2))
+
