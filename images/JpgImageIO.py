@@ -150,6 +150,14 @@ def convert_pillowImage_to_BW_matrixImage(pillowImage):
 
 
 def create_image_from_symbol_pixels_list(image, symbol_pixels):
+    """
+    This function creates an image that contains only a symbol, applying a 10 pixel white padding around it. Used for
+    testing purposes, when developing the symbol extraction algorithm
+    :param image:
+    :param symbol_pixels:
+    :return:
+    """
+
     left_most = symbol_pixels[0]
     top_most = symbol_pixels[0]
     right_most = symbol_pixels[0]
@@ -180,5 +188,13 @@ def create_image_from_symbol_pixels_list(image, symbol_pixels):
 
 
 def __normalize_pixel(normalization_pixel, padding, pixel):
+    """
+    This function shifts the coordinates of a pixel based on the normalization_pixel and the padding
+    :param normalization_pixel:
+    :param padding:
+    :param pixel:
+    :return:
+    """
+
     return tuple((pixel[0] - normalization_pixel[0] + padding / 2, pixel[1] - normalization_pixel[1] + padding / 2))
 
