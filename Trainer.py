@@ -1,6 +1,6 @@
 import torch
 import metrics as m
-from Config import Config
+from model.Config import Config
 from Dataset import *
 
 import torch.optim as optim
