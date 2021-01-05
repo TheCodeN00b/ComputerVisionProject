@@ -101,7 +101,7 @@ class Config:
 
     classes = symbol_to_idx_len
     img_size = 28
-    train_dataset_size = 100 * 1000
+    train_dataset_size = 30 * 1000
     test_dataset_size = int(0.2 * train_dataset_size)
 
     # Training data
