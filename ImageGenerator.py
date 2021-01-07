@@ -7,6 +7,12 @@ image_count = 0
 
 
 def __generate_equation(eq_string):
+    """
+    Processes the equation string
+    :param eq_string:
+    :return:
+    """
+
     equation_symbols = []
 
     for symbol in eq_string:
@@ -41,6 +47,12 @@ def __generate_equation(eq_string):
 
 
 def __generate_equation_images(equation_symbols):
+    """
+    Generates equations iamges
+    :param equation_symbols:
+    :return:
+    """
+
     bg_path = "bg/"
     backgrounds = listdir(bg_path)
     bg_i = random.randint(0, len(backgrounds) - 1)
@@ -79,6 +91,13 @@ def __generate_equation_images(equation_symbols):
 
 
 def __save_images(dirty, clean):
+    """
+    Saves the generated images
+    :param dirty:
+    :param clean:
+    :return:
+    """
+
     global image_count
     path_dirty = "denoising_dataset/dirty/" + str(image_count) + ".jpg"
     path_clean = "denoising_dataset/clean/" + str(image_count) + ".jpg"
@@ -90,12 +109,23 @@ def __save_images(dirty, clean):
 
 
 def __get_pixel_color():
+    """
+    Randomizes the pixel color to be 100 +- 20 for all of the channels
+    :return:
+    """
+
     base = (100, 100, 100)
     i = random.randint(-20, 20)
     return tuple((base[0] + i, base[1] + i, base[2] + 1))
 
 
 def __get_image_symbol(path):
+    """
+    Returns a tuple containing info about the symbol and makes the symbol lines thicker
+    :param path:
+    :return:
+    """
+
     files = listdir(path)
     i = random.randint(0, len(files) - 1)
     path += files[i]
