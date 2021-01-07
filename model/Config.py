@@ -93,15 +93,15 @@ if symbol_to_idx_len != idx_to_symbol_len:
 @dataclass()
 class Config:
     if user == Users.FRANC:
-        train_dataset_filepath = "/train_data"
-        test_dataset_filepath = "/test_data"
+        train_dataset_filepath = "train_data"
+        test_dataset_filepath = "test_data"
 
     symbol_detector_filename = 'model_checkpoint/symbol_detector_conv2d.pt'
     use_cuda = True
 
     classes = symbol_to_idx_len
     img_size = 28
-    train_dataset_size = 100 * 1000
+    train_dataset_size = 30 * 1000
     test_dataset_size = int(0.2 * train_dataset_size)
 
     # Training data

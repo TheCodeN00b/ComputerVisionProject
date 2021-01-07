@@ -37,9 +37,9 @@ def run_confusion_matrix_test(test_dataset, model):
 if __name__ == '__main__':
     print('[Main]')
 
-    train_dataset = SymbolsDataset(Conf.train_dataset_filepath, size=Conf.train_dataset_size)
-    train_dataset.balance_dataset()
-    train_dataset.print_info()
+    # train_dataset = SymbolsDataset(Conf.train_dataset_filepath, size=Conf.train_dataset_size)
+    # train_dataset.balance_dataset()
+    # train_dataset.print_info()
 
     test_dataset = SymbolsDataset(Conf.test_dataset_filepath, size=Conf.test_dataset_size)
     test_dataset.balance_dataset()
@@ -49,13 +49,13 @@ if __name__ == '__main__':
     if Conf.use_cuda:
         model.to('cuda')
 
-    t.train_model(
-        train_dataset=train_dataset,
-        test_dataset=test_dataset,
-        model=model,
-        loss_func=nn.CrossEntropyLoss(),
-        optimizer=optim.SGD(lr=1e-3, params=model.parameters(), momentum=0.9)
-    )
+    # t.train_model(
+    #     train_dataset=train_dataset,
+    #     test_dataset=test_dataset,
+    #     model=model,
+    #     loss_func=nn.CrossEntropyLoss(),
+    #     optimizer=optim.SGD(lr=1e-3, params=model.parameters(), momentum=0.9)
+    # )
 
     # # sample, targets = train_dataset[0: 2]
     # # out = model_checkpoint(sample)
