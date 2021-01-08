@@ -1,6 +1,6 @@
 
+import torch
 import torch.optim as optim
-
 from denoisingAutoencoder import Utils
 from denoisingAutoencoder.DenoisingNetwork import DenoisingNetwork
 from denoisingAutoencoder.Utils import saveOutput, normalizeSample, getUsedDevice, cleanOutputDirectory
@@ -36,9 +36,9 @@ if __name__ == '__main__':
         # and we have to resume even the same optimizer
         start_epoch = 0
 
-        Adam = optim.Adam(model.parameters(), lr=Conf.dNet_learning_rate, weight_decay=3e-4)
+        Adam = optim.Adam(model.parameters(), lr=Conf.dNet_learning_rate, weight_decay=9e-5)
         SGD = optim.SGD(model.parameters(), lr=Conf.dNet_learning_rate, momentum=0.96)
-        used_optimizer = SGD
+        used_optimizer = Adam
 
         # if we want to continue a previous uncompleted training
         if Conf.dNet_resumeTraining:
@@ -76,20 +76,19 @@ if __name__ == '__main__':
 
     for step, sample in enumerate(test_set):
 
-        noised_image, expected_output = sample
+        grey_noised_image = torch.from_numpy(sample[0])
+        grey_noised_image = grey_noised_image.float().to(Utils.getUsedDevice())
 
         # count the number of processed images
         count += 1
 
-        # We normalize the image with noise
-        grey_noised_image = normalizeSample(noised_image, 'test')
-
         # Compute the reconstruction
-        clean_reconstructed = model(grey_noised_image)
+        clean_reconstructed = model(grey_noised_image.reshape(-1, 1, Conf.img_h, Conf.img_w))
+        clean_reconstructed = clean_reconstructed.reshape(-1, Conf.img_h, Conf.img_w)
 
         # save a reconstructed vs original frame plot for each sample in the test set
         # saving the original target form in RGB as pytorch tensor
-        saveOutput(clean_reconstructed, expected_output, 'test', count)
+        saveOutput(clean_reconstructed, clean_reconstructed, 'test', count)
 
         print("reconstructed image -> " + str(count))
 

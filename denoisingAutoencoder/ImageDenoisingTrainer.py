@@ -57,13 +57,15 @@ class ImageDenoisingTrainer:
             for data in enumerate(train_loader):
                 # we read the image from data that has the form of (step, frame) tuple
                 tuple = data[1]
-                noised_image = tuple[0].to(Utils.getUsedDevice())
-                expected_output = tuple[1].to(Utils.getUsedDevice())
+                noised_image = tuple[0].float().to(Utils.getUsedDevice())
+                expected_output = tuple[1].float().to(Utils.getUsedDevice())
 
                 self.optimizer.zero_grad()  # the optimizer is reset
 
                 # Train on the selected sample 'grey_denoised_image'
-                clean_reconstructed = self.model(noised_image)
+                clean_reconstructed = self.model(noised_image.reshape(-1, 1, Conf.img_h, Conf.img_w))
+                #print(clean_reconstructed.shape)
+                clean_reconstructed = clean_reconstructed.reshape(-1, Conf.img_h, Conf.img_w)
 
                 # reconstruction error between the clean expected image (target) and the reconstructed one
                 train_loss = loss_function(clean_reconstructed, expected_output)
@@ -116,11 +118,12 @@ class ImageDenoisingTrainer:
 
             # we read the image from data that has the form of (step, frame) tuple
             tuple = data[1]
-            noised_image = tuple[0].to(Utils.getUsedDevice())
-            expected_output = tuple[1].to(Utils.getUsedDevice())
+            noised_image = tuple[0].float().to(Utils.getUsedDevice())
+            expected_output = tuple[1].float().to(Utils.getUsedDevice())
 
             # Train on the selected sample 'grey_denoised_image'
-            clean_reconstructed = self.model(noised_image)
+            clean_reconstructed = self.model(noised_image.reshape(-1, 1, Conf.img_h, Conf.img_w))
+            clean_reconstructed = clean_reconstructed.reshape(-1, Conf.img_h, Conf.img_w)
 
             # reconstruction error between the clean expected image (target) and the reconstructed one
             validation_loss = loss_function(clean_reconstructed, expected_output)
@@ -150,7 +153,7 @@ class ImageDenoisingTrainer:
                 'model_state_dict': self.model.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
                 'loss': validation_loss,
-            }, Conf.a_modelsPath + 'colorizationNet_checkpoint.pt')
+            }, Conf.a_modelsPath + 'denoisingNet_checkpoint.pt')
 
         # We also save each loss value in a file, to manage a resumed model training
         Utils.saveLossValue(epoch_loss, 'validate')
@@ -175,19 +178,8 @@ class ImageDenoisingTrainer:
             np.random.shuffle(indices)
             train_indices, val_indices = indices[split:], indices[:split]
 
-            augmentedTrainIndexes = list()
-            # replace each original training item with two augmented variations
-            for index in train_indices:
-                originalItem = self.dataset.__getitem__(index)
-                newItem0, newItem1 = self.dataset.augmentItem(originalItem, index)
-
-                # add the two variation indexes to add them to the final train loader
-                # using the train sampler
-                augmentedTrainIndexes.append(newItem0)
-                augmentedTrainIndexes.append(newItem1)
-
             # Creating PT data samplers and loaders:
-            train_sampler = SubsetRandomSampler(augmentedTrainIndexes)
+            train_sampler = SubsetRandomSampler(train_indices)
             valid_sampler = SubsetRandomSampler(val_indices)
 
             # build the augmented train loader and the normal validation loader

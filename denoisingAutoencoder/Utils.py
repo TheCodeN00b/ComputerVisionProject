@@ -45,7 +45,7 @@ def cleanOutputDirectory():
         file.truncate(0)
         file.close()
 
-    print('[Main] Deleting previous reconstructed frames')
+    print('[Main] Deleting previous reconstructed images')
     frames = os.listdir(Conf.a_datasetPath + 'reconstruction_results/')
     for frame in frames:
         os.remove(Conf.a_datasetPath + 'reconstruction_results/' + frame)
@@ -63,18 +63,20 @@ def saveOutput(reconstructed_image, expected_image, mode, count):
     expected_image = expected_image.cpu().detach().numpy()
 
     # save the reconstructed versus original output plot for the sample
-    plt.imsave(Conf.a_datasetPath + 'reconstruction_results/' + mode + str(count) + " _reconstructed_image.png", reconstructed_image)
-    plt.imsave(Conf.a_datasetPath + 'reconstruction_results/' + mode + str(count) + "_expected_image.png", expected_image)
+    plt.imsave(Conf.a_datasetPath + 'reconstruction_results/' + mode + str(count) + " _reconstructed_image.png", reconstructed_image[0] ,cmap='Greys_r')
+
+    if mode != 'test':
+        plt.imsave(Conf.a_datasetPath + 'reconstruction_results/' + mode + str(count) + "_expected_image.png", expected_image[0], cmap='Greys_r')
 
     torch.cuda.empty_cache()
 
 # save the passed image
 def print_image(image):
 
-    #image = image.cpu().detach().numpy()
+    image = image.cpu().detach().numpy()
 
     # save the reconstructed versus original output plot for the sample
-    plt.imsave(Conf.a_datasetPath + 'reconstruction_results/print_image.png', image)
+    plt.imsave(Conf.a_datasetPath + 'reconstruction_results/print_image.png', image, cmap='Greys_r')
 
     torch.cuda.empty_cache()
 
@@ -82,7 +84,7 @@ def print_image(image):
 def resumeFromCheckpoint():
 
     model = DenoisingNetwork().to(getUsedDevice())
-    optimizer = torch.optim.Adam(model.parameters(), lr=Conf.cNet_learning_rate, weight_decay=1e-10)
+    optimizer = torch.optim.Adam(model.parameters(), lr=Conf.dNet_learning_rate, weight_decay=1e-10)
     checkpoint = torch.load(Conf.a_modelsPath + 'denoisingNet_checkpoint.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
