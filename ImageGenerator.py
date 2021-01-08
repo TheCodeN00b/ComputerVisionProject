@@ -3,10 +3,10 @@ from os import listdir
 import images.JpgImageIO as imio
 from PIL import Image
 
-image_count = 0
+image_count = 800
 
 
-def __generate_equation(eq_string):
+def __generate_equation(eq_string, symbols_path):
     """
     Processes the equation string
     :param eq_string:
@@ -16,7 +16,6 @@ def __generate_equation(eq_string):
     equation_symbols = []
 
     for symbol in eq_string:
-        path = ""
         if symbol == "n":
             # number
             n = random.randint(0, 9)
@@ -41,7 +40,7 @@ def __generate_equation(eq_string):
         elif symbol == ")":
             path = "symbols_from_dataset/)/"
 
-        equation_symbols.append(__get_image_symbol(path))
+        equation_symbols.append(__get_image_symbol(symbols_path + path))
 
     __generate_equation_images(equation_symbols)
 
@@ -127,6 +126,7 @@ def __get_image_symbol(path):
     """
 
     files = listdir(path)
+
     i = random.randint(0, len(files) - 1)
     path += files[i]
     image = imio.open_jpg_image(path, bw=True)
@@ -268,6 +268,20 @@ if __name__ == "__main__":
         - (: opening bracket (
         - s: sqrt
     '''
-    for _ in range(3):
-        eq_str = "nonoxl(x)"
-        __generate_equation(eq_str)
+
+    # change your symbols directory if needed
+    symbols_path = "C:/Users/theje/PycharmProjects/ComputerVisionProject/"
+
+    equations = ["nonoxl(x)", "nononon", "(nxonx)ol(x)on",
+                 "l(x)on", "l(nx)ol(x)", "nonox", "xonx",
+                 "xonol(nx)", "n(nxol(n))", "noxl(nx)",
+                 "xoxon", "no(xol(x))", "nononx", "l(nx)",
+                 "xl(x)", "nxl(nxon)", "l(nonxon)", "x", "nxon", "n"
+                 "nnn", "nn", "nnnnn", "nnnn", "nnnnnxon"]
+    index = 0
+
+    for _ in range(100):
+        for i in range(len(equations)):
+            print(equations[i])
+            __generate_equation(equations[i], symbols_path)
+

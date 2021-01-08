@@ -64,30 +64,25 @@ class DenoisingDataset(Dataset):
 
             for img in images:
 
-                for i in range(4):
-                    # we read clean and noisy image from the dataset directory
-                    noisy_image = cv2.imread(images_directory + '/noisy/' + img, )
-                    clean_image = cv2.imread(images_directory + '/clean/' + img, )
+                # we read clean and noisy image from the dataset directory
+                noisy_image = cv2.imread(images_directory + '/noisy/' + img, )
+                clean_image = cv2.imread(images_directory + '/clean/' + img, )
 
-                    mode = randint(0, 10)
-                    noisy_image = self.transformImage(noisy_image, mode)
-                    clean_image = self.transformImage(clean_image, mode)
+                # We convert to one channel images
+                noisy_gray = cv2.cvtColor(noisy_image, cv2.COLOR_BGR2GRAY)
+                clean_gray = cv2.cvtColor(clean_image, cv2.COLOR_BGR2GRAY)
 
-                    # We convert to one channel images
-                    noisy_gray = cv2.cvtColor(noisy_image, cv2.COLOR_BGR2GRAY)
-                    clean_gray = cv2.cvtColor(clean_image, cv2.COLOR_BGR2GRAY)
+                # converting the image to array and normalizing the data
+                noisy_gray = img_to_array(noisy_gray, dtype='float32') / 255.
+                clean_gray = img_to_array(clean_gray, dtype='float32') / 255.
 
-                    # converting the image to array and normalizing the data
-                    noisy_gray = img_to_array(noisy_gray, dtype='float32') / 255.
-                    clean_gray = img_to_array(clean_gray, dtype='float32') / 255.
+                # We resize each image
+                noisy_gray = cv2.resize(noisy_gray, (Conf.img_w, Conf.img_h))
+                clean_gray = cv2.resize(clean_gray, (Conf.img_w, Conf.img_h))
 
-                    # We resize each image
-                    noisy_gray = cv2.resize(noisy_gray, (Conf.img_w, Conf.img_h))
-                    clean_gray = cv2.resize(clean_gray, (Conf.img_w, Conf.img_h))
-
-                    # We add the new tuple to the list
-                    tuple = (noisy_gray, clean_gray)
-                    images_list.append(tuple)
+                # We add the new tuple to the list
+                tuple = (noisy_gray, clean_gray)
+                images_list.append(tuple)
 
         return images_list
 
