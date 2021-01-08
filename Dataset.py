@@ -10,8 +10,8 @@ from PIL import Image, ImageFilter
 import os
 import shutil
 
-import Config as Conf
-from Config import Config as Conf_var
+import model.Config as Conf
+from model.Config import Config as Conf_var
 from tqdm import tqdm
 
 from random import seed

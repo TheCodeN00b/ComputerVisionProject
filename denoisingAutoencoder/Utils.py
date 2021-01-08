@@ -9,7 +9,7 @@ from denoisingAutoencoder.Config import Config as Conf
 from matplotlib import pyplot as plt
 
 
-# Shows what device you are using to compute and the model number of parameters
+# Shows what device you are using to compute and the model_checkpoint number of parameters
 from denoisingAutoencoder.DenoisingNetwork import DenoisingNetwork
 
 
@@ -50,7 +50,7 @@ def cleanOutputDirectory():
     for frame in frames:
         os.remove(Conf.a_datasetPath + 'reconstruction_results/' + frame)
 
-# Normalize and convert the dataset samples and return the model input
+# Normalize and convert the dataset samples and return the model_checkpoint input
 def normalizeSample(sample, caller):
     normalized_image = 0
     return normalized_image
@@ -80,7 +80,7 @@ def print_image(image):
 
     torch.cuda.empty_cache()
 
-# We resume the trained model from the last checkpoint
+# We resume the trained model_checkpoint from the last checkpoint
 def resumeFromCheckpoint():
 
     model = DenoisingNetwork().to(getUsedDevice())
@@ -96,7 +96,7 @@ def resumeFromCheckpoint():
 
 
 # We save each loss value we produce in training to plot the entire curve
-# because we can perform many run sessions of a restored model
+# because we can perform many run sessions of a restored model_checkpoint
 def saveLossValue(loss, mode):
     # we save a file with information on the executed epoch
     if mode == 'train':
@@ -111,7 +111,7 @@ def saveLossValue(loss, mode):
 
 
 # At each epoch we save the loss value in a file.txt, here we restore those information to plot
-# This file is used specifically when we run the model on separate sessions
+# This file is used specifically when we run the model_checkpoint on separate sessions
 def readRecordedLosses(type):
     # define empty list
     losses = []

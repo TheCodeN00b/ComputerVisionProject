@@ -12,7 +12,7 @@ from denoisingAutoencoder.Utils import normalizeSample, saveOutput
 
 class ImageDenoisingTrainer:
     """
-    Utility class for train the model
+    Utility class for train the model_checkpoint
     """
 
     def __init__(
@@ -23,7 +23,7 @@ class ImageDenoisingTrainer:
     ):
         """
 
-        :param model: the model to train for the image denoising task
+        :param model: the model_checkpoint to train for the image denoising task
         :param optimizer: the used optimizer
         :param train_dataset: the train dataset
         """
@@ -94,7 +94,7 @@ class ImageDenoisingTrainer:
             # compute the epoch training loss
             epoch_loss = epoch_loss / epoch_batches
 
-            # We also save each loss value in a file, to manage a resumed model training
+            # We also save each loss value in a file, to manage a resumed model_checkpoint training
             Utils.saveLossValue(epoch_loss, 'train')
 
             # display the epoch training loss
@@ -145,9 +145,9 @@ class ImageDenoisingTrainer:
         # compute the epoch validation loss
         epoch_loss = epoch_loss / epoch_batches
 
-        # if this model version provides the best loss in validation we save it
+        # if this model_checkpoint version provides the best loss in validation we save it
         if saveModel:
-            # we save the last epoch checkpoint of the model
+            # we save the last epoch checkpoint of the model_checkpoint
             torch.save({
                 'epoch': start_epoch + epoch + 1,
                 'model_state_dict': self.model.state_dict(),
@@ -155,7 +155,7 @@ class ImageDenoisingTrainer:
                 'loss': validation_loss,
             }, Conf.a_modelsPath + 'denoisingNet_checkpoint.pt')
 
-        # We also save each loss value in a file, to manage a resumed model training
+        # We also save each loss value in a file, to manage a resumed model_checkpoint training
         Utils.saveLossValue(epoch_loss, 'validate')
 
         # display the epoch training loss
