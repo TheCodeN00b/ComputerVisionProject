@@ -51,7 +51,7 @@ def train_model(
             optimizer.zero_grad()
 
             sample, labels = train_dataset[i * Config.batch_size: (i + 1) * Config.batch_size]
-            out = model(sample)
+            out, _ = model(sample)
 
             # loss = loss_func(out, labels.long())
             loss = loss_func(out, labels)
@@ -64,7 +64,7 @@ def train_model(
         with torch.no_grad():
             for i in tqdm(range(num_of_test_samples)):
                 sample, labels = test_dataset[i: i + 1]
-                out = model(sample)
+                out, _ = model(sample)
                 loss = loss_func(out, labels)
 
                 test_loss += loss.tolist()
@@ -96,7 +96,7 @@ def train_model(
             '  Delta:   ', '{:.02f}'.format(train_acc - prev_train_acc).rjust(7))
         print(
             'Average test loss:       ', "{:.04f}".format(avg_test_loss).rjust(7),
-            '  Prev loss: ', '{:0.4f}'.format(prev_train_loss).rjust(7),
+            '  Prev loss: ', '{:0.4f}'.format(prev_test_loss).rjust(7),
             '  Delta:   ', '{:.04f}'.format(avg_test_loss - prev_test_loss).rjust(7))
         print(
             'Average test acc:        ', "{:.02f}%".format(test_acc).rjust(7),

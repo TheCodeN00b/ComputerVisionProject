@@ -93,26 +93,26 @@ if symbol_to_idx_len != idx_to_symbol_len:
 @dataclass()
 class Config:
     if user == Users.FRANC:
-        train_dataset_filepath = "train_data"
-        test_dataset_filepath = "test_data"
+        train_dataset_filepath = "C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/train_data"
+        test_dataset_filepath = "C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/test_data"
 
-    symbol_detector_filename = 'model_checkpoint/symbol_detector_conv2d.pt'
+    symbol_detector_filename = 'le_net_5.pt'
     use_cuda = True
 
     classes = symbol_to_idx_len
-    img_size = 28
-    train_dataset_size = 30 * 1000
+    img_size = 32
+    train_dataset_size = 40 * 1000
     test_dataset_size = int(0.2 * train_dataset_size)
 
     # Training data
-    batch_size = 64
+    batch_size = 16
     num_of_epochs = 40
 
     # model_checkpoint data
-    hidden_1 = 16
-    hidden_2 = 32
-    hidden_3 = 64
-    hidden_4 = 128
-    hidden_5 = 256
+    hidden_1 = 32
+    hidden_2 = 64
+    hidden_3 = 128
+    hidden_4 = 256
+    hidden_5 = 512
     hidden_6 = 1024
     flat_layer_features = 512
