@@ -73,25 +73,23 @@ def cleanse_dataset():
             else:
                 symbol_name = symbol[0]
 
-            if symbol_name != 'log' and symbol_name != 'sqrt':
-                golden_img = data_transform(Image.open(golden_imgs + '/' + symbol_name + '.jpg')).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
-                l1_diff = torch.nn.functional.l1_loss(img, golden_img).tolist()
+            # if symbol_name == 'log' or symbol_name == 'sqrt':
+            # golden_img = data_transform(Image.open(golden_imgs + '/' + symbol_name + '.jpg')).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
+            # l1_diff = torch.nn.functional.l1_loss(img, golden_img).tolist()
 
-                flat_img = img.view(28 * 28)
-                white_pixels = flat_img[flat_img[:] == 1].size()[0]
-                fraction = white_pixels / (28 * 28)
+            flat_img = img.view(32 * 32)
+            white_pixels = flat_img[flat_img[:] == 1].size()[0]
+            fraction = white_pixels / (32 * 32)
 
-                if \
-                        (l1_diff > 0.24 and symbol_name in ['(', ')']) or \
-                        (l1_diff > 0.35 and symbol_name in ['x']) or\
-                                (l1_diff > 0.3 and symbol_name in ['1', '2']) or\
-                                (l1_diff > 0.5) or fraction > 0.95:
-                    symbols_rejected[symbol_name] += 1
-                    os.remove(train_dataset_filepath + '/' + symbol)
+            if fraction > 0.9:
+                    # (l1_diff > 0.24 and symbol_name in ['(', ')']) or (l1_diff > 0.35 and symbol_name in ['x']) or\
+                    # (l1_diff > 0.3 and symbol_name in ['1', '2']) or (l1_diff > 0.4) or \:
+                symbols_rejected[symbol_name] += 1
+                os.remove(train_dataset_filepath + '/' + symbol)
 
         except Exception as e:
             x = 1
-            # print(e)
+            print(e)
 
     for key in symbols_rejected.keys():
         print('Rejected', symbols_rejected[key], 'images for symbol', key)
@@ -100,7 +98,7 @@ def cleanse_dataset():
 def build_bold_dataset():
     # creating data directories
     # os.mkdir('C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/train_data_bold')
-    os.mkdir('C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/test_data_bold')
+    # os.mkdir('C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/test_data_bold')
 
     train_symbols = os.listdir(Conf.Config.train_dataset_filepath)
     test_symbols = os.listdir(Conf.Config.test_dataset_filepath)
@@ -142,33 +140,28 @@ def build_bold_dataset():
 
     # symbols_to_skip = []
     #
-    for i in tqdm(range(len(test_symbols))):
-        symbol = test_symbols[i]
-        try:
-            img = data_transform(Image.open(Conf.Config.test_dataset_filepath + '/' + symbol)).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
-            bold_img = img
+    for i in tqdm(range(len(train_symbols))):
+        symbol = train_symbols[i]
+        if 'log' in symbol:
+            try:
+                img = data_transform(Image.open(Conf.Config.train_dataset_filepath + '/' + symbol)).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
+                bold_img = img
 
-            pixels = []
-            for i in range(28):
-                for j in range(28):
-                    if bold_img[0, 0, i, j] != 1:
-                        pixels.append((i, j))
+                pixels = []
+                for i in range(28):
+                    for j in range(28):
+                        if bold_img[0, 0, i, j] != 1:
+                            pixels.append((i, j))
 
-            # if len(pixels) / (28 * 28) > 0.8 or len(pixels) / (28 * 28) < 0.1:
-            #     symbols_to_skip.append(symbol)
+                for pixel in pixels:
+                    i, j = pixel
+                    bold_img[0, 0, i, j] = 0
+                    bold_img[0, 0, min(27, i + 1), min(27, j + 1)] = 0
 
-            #
-            #
-            #
-            for pixel in pixels:
-                i, j = pixel
-                bold_img[0, 0, i, j] = 0
-                bold_img[0, 0, min(27, i + 1), min(27, j + 1)] = 0
-
-            pil_img = transforms.ToPILImage(mode='L')(bold_img[0, 0].to('cpu'))
-            pil_img.save('C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/test_data_bold/' + symbol)
-        except:
-            x = 1
+                pil_img = transforms.ToPILImage(mode='L')(bold_img[0, 0].to('cpu'))
+                pil_img.save('C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/train_data_bold/' + symbol)
+            except:
+                x = 1
 
     # print(len(symbols_to_skip))
     # print(symbols_to_skip)
@@ -242,15 +235,13 @@ class SymbolsDataset(Dataset):
 
         data_transform = transforms.Compose([
             transforms.Grayscale(),
-            # transforms.Pad(padding=(14, 14), fill=255, padding_mode='constant'),
-            # transforms.ColorJitter(contrast=1000),
             transforms.Resize((Conf.Config.img_size, Conf.Config.img_size)),
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])
         self.new_img_transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.RandomRotation((-15, 15)),
+            # transforms.RandomRotation((-15, 15)),
             transforms.ToTensor()
         ])
 
@@ -276,13 +267,14 @@ class SymbolsDataset(Dataset):
 
             try:
                 img_symbol = data_transform(Image.open(filepath + '/' + symbol_filepath)).view(1, 1, Conf.Config.img_size, Conf.Config.img_size)
+                label_code = Conf.symbol_to_idx[symbol_name]
 
                 # # it creates the vector for one-hot encoding
                 # label_vector = torch.zeros((1, Conf_var.classes))
                 # label_vector[:, Conf.symbol_to_idx[symbol_name]] = 1
 
                 self.data[i] = img_symbol
-                self.labels[i] = Conf.symbol_to_idx[symbol_name]
+                self.labels[i] = label_code
             except:
                 x = 1
 
@@ -365,7 +357,7 @@ class SymbolsDataset(Dataset):
         print('# of images of 7:        ', (self.labels == Conf.symbol_to_idx['7']).nonzero().size()[0])
         print('# of images of 8:        ', (self.labels == Conf.symbol_to_idx['8']).nonzero().size()[0])
         print('# of images of 9:        ', (self.labels == Conf.symbol_to_idx['9']).nonzero().size()[0])
-        print('# of images of log:      ', (self.labels == Conf.symbol_to_idx['log']).nonzero().size()[0])
+        # print('# of images of log:      ', (self.labels == Conf.symbol_to_idx['log']).nonzero().size()[0])
         print('# of images of sqrt:     ', (self.labels == Conf.symbol_to_idx['sqrt']).nonzero().size()[0])
         print('# of images of x:        ', (self.labels == Conf.symbol_to_idx['x']).nonzero().size()[0])
         print('# of images of (:        ', (self.labels == Conf.symbol_to_idx['(']).nonzero().size()[0])

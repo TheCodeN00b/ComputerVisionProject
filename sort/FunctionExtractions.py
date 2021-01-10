@@ -3,15 +3,18 @@ import math
 from utils import EquationTreeNode as EqTree
 from utils import Rectangle as Rect
 import progressbar
-from model.Model import Conv2DSymbolDetector
+from model.Model import LeNet5
 from images import JpgImageIO as jpg
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
 import torch as torch
+import torchvision.transforms as transforms
 
 from model.Config import Config as Conf
+from model import Config
+import Utils as u
 
 symbols_info = []
 symbols_names = []
@@ -28,96 +31,119 @@ def create_function(image):
     show information about tuple
     """
     # Extraxts all the symbols
-    global image_symbols
+    global image_symbols, symbols_info, symbols_names
+    image_symbols = []
+    symbols_info = []
+    symbols_names = []
     image_symbols = ImExp.explore_image(image)[0]
 
     # For each symbol, extracts the rectangle
-    bar = progressbar.ProgressBar(prefix='Extracting rectangles ', suffix=' Complete', maxval=len(image_symbols),
-                                  widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()]).start()
-
     for i in range(len(image_symbols)):
         symbol = image_symbols[i]
-        symbols_rectangles.append(ImExp.getSymbolRectangle(symbol))
-        bar.update(i + 1)
-    bar.finish()
 
-    # Computes the rectangle's info
-    bar = progressbar.ProgressBar(prefix='Extracting information ', suffix=' Complete', maxval=len(symbols_rectangles),
-                                  widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()]).start()
+        # pixels = symbol[0]
+        left_most = symbol[1]
+        top_most = symbol[2]
+        right_most = symbol[3]
+        bottom_most = symbol[4]
+        center = symbol[5]
 
-    for i in range(len(symbols_rectangles)):
-        coordinates = symbols_rectangles[i]
-        rect_info = __extract_rect_information(coordinates)
-        symbols_info.append(rect_info)
-        bar.update(i + 1)
-    bar.finish()
+        width = right_most[0] - left_most[0] + 1
+        height = bottom_most[1] - top_most[1] + 1
+
+        symbol_rect = Rect.Rectangle(
+            top_left_corner=[left_most[0], top_most[1]],
+            top_right_corner=[right_most[0], top_most[1]],
+            bottom_left_corner=[left_most[0], bottom_most[1]],
+            bottom_right_corner=[right_most[0], bottom_most[1]],
+            center=center,
+            width=width,
+            height=height
+        )
+
+        symbols_info.append(symbol_rect)
+
+    # for i in range(len(symbols_rectangles)):
+    #     coordinates = symbols_rectangles[i]
+    #     rect_info = __extract_rect_information(coordinates)
+    #     symbols_info.append(rect_info)
+    #     bar.update(i + 1)
+    # bar.finish()
 
     print()
 
     # model initialization
-    model = Conv2DSymbolDetector()
-    checkpoint = torch.load(Conf.symbol_detector_filename)
+    model = LeNet5(16)
+    model.to('cuda')
+    checkpoint = torch.load('model_checkpoint/' + Conf.symbol_detector_filename)
     model.load_state_dict(checkpoint['model_state_dict'])
 
     # Determine the correct math symbol with the NN
     # and put them into the symbols_name list
     for i in range(len(image_symbols)):
-        symbol = __shift_symbol_coordinates(image_symbols[i])
+        # symbol = __shift_symbol_coordinates(image_symbols[i])
         info = symbols_info[i]
+        pixels = image_symbols[i][0]
 
-        # safety padding: since the width and height are calculated without float division, it can
-        # give an incorrect result. so just to avoid trouble, we put a padding there avoiding the
-        # index out of bound
-        width = info.width + 5
-        height = info.height + 5
-        symbol_img = Image.new("RGB", (width, height), "white")
-        symbol_img_pixels = symbol_img.load()
+        symbol_img = torch.ones((1, 1, info.height, info.width)).to('cuda')
+        for pixel in pixels:
+            x = pixel[1] - info.top_left_corner[1]
+            y = pixel[0] - info.top_left_corner[0]
 
-        for j in range(len(symbol)):
-            x_coord = symbol[j][1]
-            y_coord = symbol[j][0]
-            symbol_img_pixels[x_coord, y_coord] = 0
+            symbol_img[0, 0, x, y] = torch.Tensor([0])
 
-        # symbol_img.show()
+        # symbol_img = transforms.ToTensor()(transforms.ToPILImage(mode='L')(
+        #     tensor_img[0, 0].to('cpu')).crop((
+        #         info.top_left_corner[0],        # left
+        #         info.top_left_corner[1],        # top
+        #         info.bottom_right_corner[0],    # right
+        #         info.bottom_right_corner[1],    # bottom
+        #         )
+        # )).view(1, 1, info.height, info.width)
 
-        ratio = height / width
-        print('Symbol info\n-widht:', width, '\n-height:', height, '\n-ratio', ratio)
+        dim_ratio = info.height / info.width
+        if 0.3 > dim_ratio > 0.1:
+            cut_symbol_img = transforms.ToTensor()(transforms.ToPILImage(mode='L')(symbol_img[0, 0].to('cpu')).crop((0, 0, info.height, info.height))).view(1, 1, info.height, info.height)
+            symbol_img = cut_symbol_img
 
-        if ratio < 1.0:
-            if ratio <= 0.15:
-                new_width = 48
-            else:
-                new_width = height
+        data_transform = transforms.Compose([
+                    transforms.ToPILImage(),
+                    transforms.Grayscale(),
+                    transforms.Pad(padding=(10, 10), fill=255, padding_mode='constant'),
+                    transforms.ColorJitter(contrast=0.4),
+                    transforms.Resize((32, 32)),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.1307,), (0.3081,))
+                ])
 
-            reshaped_symbol_img = Image.new("RGB", (new_width, height), "white")
-            reshaped_symbol_img_pixels = reshaped_symbol_img.load()
+        pil_img = transforms.ToPILImage(mode='L')(data_transform(symbol_img[0, 0].to('cpu')))
+        pil_img.save('test/symbol_' + str(i) + '.jpg')
 
-            for x in range(new_width):
-                for y in range(height):
-                    reshaped_symbol_img_pixels[x, y] = symbol_img_pixels[x, y]
+        with torch.no_grad():
+            votes = []
+            for t in range(20):
+                model_out, probs = model(data_transform(symbol_img[0, 0].to('cpu')).view(1, 1, Conf.img_size, Conf.img_size).to('cuda'))
+                argmax = torch.argmax(probs, dim=1)
+                votes.append(argmax.tolist()[0])
 
-            symbol_img = reshaped_symbol_img
+            best_vote = -1
+            max_count = -float("inf")
 
-        resize_image = jpg.resize_image(symbol_img, 48)
-        # resize_image.show()
+            for vote in set(votes):
+                count = votes.count(vote)
+                if count > max_count:
+                    max_count = count
+                    best_vote = vote
 
-        resize_img_matrix = jpg.convert_pillowImage_to_BW_matrixImage(resize_image)
-        pixels = []
-        for x in range(48):
-            for y in range(48):
-                pixels.append(resize_img_matrix[x][y][0])
-        pixels = np.array(pixels)
-        pixels = np.reshape(pixels, (48, 48))
-
-        # resize_image.show()
-        symbol_name = model.predict_image(torch.from_numpy(pixels))
-        print('Symbol prediction completed\n')
+        symbol_name = Config.idx_to_symbol[best_vote]
+        # print('Get symbol:', symbol_name)
         if symbol_name == '-':
-            if width > len(image) / 2:
+            height = len(image)
+            if info.width > height / 2:
                 symbol_name = 'div'
         symbols_names.append(symbol_name)
 
-    preprocess_equation_symbols()
+    # preprocess_equation_symbols()
 
     __sort_equation_symbols()
     print(symbols_names)
@@ -138,7 +164,7 @@ def aggregate_two_digits(symbol: str, symbol_info: Rect.Rectangle, symbol_idx: i
     """
     global symbols_names, symbols_info
 
-    rightmost_symbol_idx = __search_right_closest_symbol(symbols_info[symbol_idx], symbol_idx)
+    rightmost_symbol_idx = __search_right_closest_symbol(symbol_info, symbol_idx)
 
     if rightmost_symbol_idx != -1:
         # we have found the rightmost symbol
@@ -189,7 +215,7 @@ def preprocess_equation_symbols():
         # we verify that is not already aggregated
         if symbol != 'aggr':
             if symbol in numbers_string:
-                new_symbol, new_symbol_info = aggregate_two_digits(symbol, symbols_info, symbol_idx, numbers_string)
+                new_symbol, new_symbol_info = aggregate_two_digits(symbol, symbol_info, symbol_idx, numbers_string)
                 print('Aggregated symbol:', new_symbol)
 
                 # if the function has returned a new symbol we insert it, otherwise we insert the previous one

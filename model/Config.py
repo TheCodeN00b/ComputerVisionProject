@@ -30,9 +30,9 @@ symbol_to_idx = {
     '7': 11,
     '8': 12,
     '9': 13,
-    'log': 14,
-    'sqrt': 15,
-    'x': 16
+    # 'log': 14,
+    'sqrt': 14,
+    'x': 15
 }
 
 idx_to_symbol = {
@@ -50,9 +50,9 @@ idx_to_symbol = {
     11: '7',
     12: '8',
     13: '9',
-    14: 'log',
-    15: 'sqrt',
-    16: 'x'
+    # 14: 'log',
+    14: 'sqrt',
+    15: 'x'
 }
 
 
@@ -71,7 +71,7 @@ class_names = [
     '7',
     '8',
     '9',
-    'log',
+    # 'log',
     'sqrt',
     'x'
 ]
@@ -96,16 +96,16 @@ class Config:
         train_dataset_filepath = "C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/train_data"
         test_dataset_filepath = "C:/Users/franc/OneDrive/Documents/University/Magistrale/Computer Vision/test_data"
 
-    symbol_detector_filename = 'le_net_5.pt'
+    symbol_detector_filename = 'le_net_5_test.pt'
     use_cuda = True
 
     classes = symbol_to_idx_len
     img_size = 32
-    train_dataset_size = 40 * 1000
+    train_dataset_size = 20 * 1000
     test_dataset_size = int(0.2 * train_dataset_size)
 
     # Training data
-    batch_size = 16
+    batch_size = 1
     num_of_epochs = 40
 
     # model_checkpoint data

@@ -10,8 +10,21 @@ from sklearn.metrics import classification_report
 
 
 def log_softmax(input):
-    softmax = torch.log_softmax(input, dim=1)
+    softmax = torch.nn.functional.softmax(input, dim=1)
     return torch.argmax(softmax, dim=1)
+
+
+def print_node(node, level):
+    """
+    The function print the input node and then explores its children
+    with a BFS visit.
+    :param node: the current node to print
+    :param level: the node's level
+    :return: None
+    """
+    print('     ' * level, '>', node.node)
+    for child in node.children:
+        print_node(child, level + 1)
 
 
 def convert_model_output(model_out):

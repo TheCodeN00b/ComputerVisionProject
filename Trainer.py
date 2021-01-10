@@ -51,24 +51,23 @@ def train_model(
             optimizer.zero_grad()
 
             sample, labels = train_dataset[i * Config.batch_size: (i + 1) * Config.batch_size]
-            out, _ = model(sample)
+            logits, probs = model(sample)
 
-            # loss = loss_func(out, labels.long())
-            loss = loss_func(out, labels)
+            loss = loss_func(probs, labels)
             loss.backward()
             optimizer.step()
 
-            train_acc += m.compute_one_hot_accuracy(predicted_labels=out, target_labels=labels)
+            train_acc += m.compute_one_hot_accuracy(predicted_labels=probs, target_labels=labels)
             train_loss += loss.tolist()
 
         with torch.no_grad():
             for i in tqdm(range(num_of_test_samples)):
                 sample, labels = test_dataset[i: i + 1]
-                out, _ = model(sample)
-                loss = loss_func(out, labels)
+                logits, probs = model(sample)
+                loss = loss_func(probs, labels)
 
                 test_loss += loss.tolist()
-                test_acc += m.compute_one_hot_accuracy(predicted_labels=out, target_labels=labels)
+                test_acc += m.compute_one_hot_accuracy(predicted_labels=probs, target_labels=labels)
 
         avg_train_loss = train_loss / num_of_batches
         train_acc = (train_acc / num_of_train_samples) * 100

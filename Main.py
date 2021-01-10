@@ -15,6 +15,7 @@ import Trainer as t
 
 from images import JpgImageIO as JpgIO
 from images import ImageExplorer
+from sort import FunctionExtractions as F
 
 from tqdm import tqdm
 
@@ -45,23 +46,24 @@ if __name__ == '__main__':
     #
     # train_dataset = SymbolsDataset(Conf.train_dataset_filepath + '_bold', size=Conf.train_dataset_size)
     # train_dataset.balance_dataset()
+    # train_dataset.print_info()
     #
     # test_dataset = SymbolsDataset(Conf.test_dataset_filepath + '_bold', size=Conf.test_dataset_size)
     # test_dataset.balance_dataset()
-    # # test_dataset.print_info()
+    # test_dataset.print_info()
     # #
-    model = LeNet5(17)
+    model = LeNet5(16)
     if Conf.use_cuda:
         model.to('cuda')
-    #
-    # # print(model)
-    #
+
+    # print(model)
+
     # t.train_model(
     #     train_dataset=train_dataset,
     #     test_dataset=test_dataset,
     #     model=model,
     #     loss_func=nn.CrossEntropyLoss(),
-    #     optimizer=optim.Adam(lr=1e-3, params=model.parameters())
+    #     optimizer=optim.Adam(lr=1e-4, params=model.parameters())
     # )
 
     # # sample, targets = train_dataset[0: 2]
@@ -71,41 +73,52 @@ if __name__ == '__main__':
 
     # run_confusion_matrix_test(test_dataset, model)
 
-    checkpoint = torch.load('model_checkpoint/' + Conf.symbol_detector_filename)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    # checkpoint = torch.load('model_checkpoint/' + Conf.symbol_detector_filename)
+    # model.load_state_dict(checkpoint['model_state_dict'])
+    # #
+    # equation_img = JpgIO.open_jpg_image('test/eq_01.jpg', bw=True)
+    # symbols, tree = F.create_function(equation_img)
+    # print()
+    # u.print_node(tree, 0)
+
+    equation_img = JpgIO.open_jpg_image('test/eq_06.jpg', bw=True)
+    symbols, tree = F.create_function(equation_img)
+    print()
+    u.print_node(tree, 0)
+    # equation_img = JpgIO.open_jpg_image('test/eq_05.jpg', bw=True)
+    # F.create_function(equation_img)
+
+    # symbols, _ = ImageExplorer.explore_image(equation_img)
+    # len(symbols)
     #
-    equation_img = JpgIO.open_jpg_image('test/eq_03.jpg', bw=True)
-    symbols, _ = ImageExplorer.explore_image(equation_img)
-    len(symbols)
-
-    for i in range(len(symbols)):
-        symbol = symbols[i]
-
-        pixels = symbol[0]
-        left_most = symbol[1]
-        top_most = symbol[2]
-        right_most = symbol[3]
-        bottom_most = symbol[4]
-        center = symbol[5]
-
-        width = right_most[0] - left_most[0] + 1
-        height = bottom_most[1] - top_most[1] + 1
-
-        symbol_img = torch.ones((1, 1, height, width)).to('cuda')
-        for pixel in pixels:
-            symbol_img[0, 0, pixel[1] - top_most[1], pixel[0] - left_most[0]] = torch.Tensor([0])
-
-        data_transform = transforms.Compose([
-            transforms.ToPILImage(),
-            # transforms.ColorJitter(contrast=1000),
-            transforms.Resize((32, 32)),
-            transforms.ToTensor()
-        ])
-        out, last_conv = model(data_transform(symbol_img[0, 0].to('cpu')).view(1, 1, Conf.img_size, Conf.img_size).to('cuda'))
-        out = out
-        print('idx:', u.log_softmax(out)[0].tolist(), ' symbol', Config.idx_to_symbol[u.log_softmax(out)[0].tolist()])
-
-        symbol_img = transforms.ToPILImage(mode='L')(symbol_img[0, 0].to('cpu'))
+    # for i in range(len(symbols)):
+    #     symbol = symbols[i]
+    #
+    #     pixels = symbol[0]
+    #     left_most = symbol[1]
+    #     top_most = symbol[2]
+    #     right_most = symbol[3]
+    #     bottom_most = symbol[4]
+    #     center = symbol[5]
+    #
+    #     width = right_most[0] - left_most[0] + 1
+    #     height = bottom_most[1] - top_most[1] + 1
+    #
+    #     symbol_img = torch.ones((1, 1, height, width)).to('cuda')
+    #     for pixel in pixels:
+    #         symbol_img[0, 0, pixel[1] - top_most[1], pixel[0] - left_most[0]] = torch.Tensor([0])
+    #
+    #     data_transform = transforms.Compose([
+    #         transforms.ToPILImage(),
+    #         # transforms.ColorJitter(contrast=1000),
+    #         transforms.Resize((32, 32)),
+    #         transforms.ToTensor()
+    #     ])
+    #     out, last_conv = model(data_transform(symbol_img[0, 0].to('cpu')).view(1, 1, Conf.img_size, Conf.img_size).to('cuda'))
+    #     out = out
+    #     print('idx:', u.log_softmax(out)[0].tolist(), ' symbol', Config.idx_to_symbol[u.log_softmax(out)[0].tolist()])
+    #
+    #     symbol_img = transforms.ToPILImage(mode='L')(symbol_img[0, 0].to('cpu'))
         # symbol_img.save('test/symbol_' + str(i) + '.jpg')
         #
         # pil_img = transforms.ToPILImage(mode='L')(last_conv[0, 0].to('cpu'))
