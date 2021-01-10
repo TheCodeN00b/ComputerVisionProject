@@ -63,13 +63,6 @@ def create_function(image):
 
         symbols_info.append(symbol_rect)
 
-    # for i in range(len(symbols_rectangles)):
-    #     coordinates = symbols_rectangles[i]
-    #     rect_info = __extract_rect_information(coordinates)
-    #     symbols_info.append(rect_info)
-    #     bar.update(i + 1)
-    # bar.finish()
-
     print()
 
     # model initialization
@@ -92,15 +85,6 @@ def create_function(image):
 
             symbol_img[0, 0, x, y] = torch.Tensor([0])
 
-        # symbol_img = transforms.ToTensor()(transforms.ToPILImage(mode='L')(
-        #     tensor_img[0, 0].to('cpu')).crop((
-        #         info.top_left_corner[0],        # left
-        #         info.top_left_corner[1],        # top
-        #         info.bottom_right_corner[0],    # right
-        #         info.bottom_right_corner[1],    # bottom
-        #         )
-        # )).view(1, 1, info.height, info.width)
-
         dim_ratio = info.height / info.width
         if 0.3 > dim_ratio > 0.1:
             cut_symbol_img = transforms.ToTensor()(transforms.ToPILImage(mode='L')(symbol_img[0, 0].to('cpu')).crop((0, 0, info.height, info.height))).view(1, 1, info.height, info.height)
@@ -115,9 +99,6 @@ def create_function(image):
                     transforms.ToTensor(),
                     transforms.Normalize((0.1307,), (0.3081,))
                 ])
-
-        pil_img = transforms.ToPILImage(mode='L')(data_transform(symbol_img[0, 0].to('cpu')))
-        pil_img.save('test/symbol_' + str(i) + '.jpg')
 
         with torch.no_grad():
             votes = []
