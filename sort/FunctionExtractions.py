@@ -86,24 +86,33 @@ def create_function(image):
             symbol_img[0, 0, x, y] = torch.Tensor([0])
 
         dim_ratio = info.height / info.width
-        if 0.3 > dim_ratio > 0.1:
+        if 0.3 > dim_ratio > 0.1 and info.height > 40:
             cut_symbol_img = transforms.ToTensor()(transforms.ToPILImage(mode='L')(symbol_img[0, 0].to('cpu')).crop((0, 0, info.height, info.height))).view(1, 1, info.height, info.height)
+            symbol_img = cut_symbol_img
+
+        if info.width > 32 and info.height < 16:
+            cut_symbol_img = transforms.ToTensor()(transforms.ToPILImage(mode='L')(symbol_img[0, 0].to('cpu')).crop((0, 0, info.height, 32))).view(1, 1, info.height, 32)
             symbol_img = cut_symbol_img
 
         data_transform = transforms.Compose([
                     transforms.ToPILImage(),
                     transforms.Grayscale(),
-                    transforms.Pad(padding=(10, 10), fill=255, padding_mode='constant'),
-                    transforms.ColorJitter(contrast=0.4),
+                    transforms.Pad(padding=(10, 10 if info.height >= 32 else 32 - info.height), fill=255, padding_mode='constant'),
+                    transforms.ColorJitter(contrast=0.9),
                     transforms.Resize((32, 32)),
                     transforms.ToTensor(),
                     transforms.Normalize((0.1307,), (0.3081,))
                 ])
 
+        pil_img = transforms.ToPILImage(mode='L')(data_transform(symbol_img[0, 0].to('cpu')))
+        pil_img.save('test/symbol_' + str(i) + '.jpg')
+
+        model_input = data_transform(symbol_img[0, 0].to('cpu')).view(1, 1, Conf.img_size, Conf.img_size).to('cuda')
+
         with torch.no_grad():
             votes = []
             for t in range(20):
-                model_out, probs = model(data_transform(symbol_img[0, 0].to('cpu')).view(1, 1, Conf.img_size, Conf.img_size).to('cuda'))
+                argmax, probs = model(model_input)
                 argmax = torch.argmax(probs, dim=1)
                 votes.append(argmax.tolist()[0])
 
@@ -117,6 +126,19 @@ def create_function(image):
                     best_vote = vote
 
         symbol_name = Config.idx_to_symbol[best_vote]
+        # if symbol_name in ['4', '+', '-']:
+        #     disambiguator = LeNet5(3)
+        #     disambiguator.to('cuda')
+        #     checkpoint = torch.load('model_checkpoint/' + 'le_net_5_4_add_sub.pt')
+        #     disambiguator.load_state_dict(checkpoint['model_state_dict'])
+        #
+        #     indices = {0: '4', 1: '+', 2: '-'}
+        #
+        #     with torch.no_grad():
+        #         _, probs = disambiguator(model_input)
+        #     argmax = torch.argmax(probs, dim=1).tolist()[0]
+        #     symbol_name = indices[argmax]
+
         # print('Get symbol:', symbol_name)
         if symbol_name == '-':
             height = len(image)

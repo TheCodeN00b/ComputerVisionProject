@@ -15,7 +15,8 @@ def train_model(
         test_dataset,
         optimizer,
         loss_func,
-        model
+        model,
+        model_filename=''
 ):
     num_of_train_samples = len(train_dataset)
     num_of_test_samples = len(test_dataset)
@@ -115,7 +116,7 @@ def train_model(
                 'optimizer_state_dict': optimizer.state_dict(),
                 'reconstruction_loss': test_loss
             },
-                'model_checkpoint/' + Config.symbol_detector_filename)
+                'model_checkpoint/' + model_filename if model_filename != '' else Config.symbol_detector_filename)
             print('[VideoInterpolationTrainer] Saved model_checkpoint checkpoint')
 
     utils.print_plot(
@@ -124,7 +125,7 @@ def train_model(
         labels=['Train loss', 'Test loss'],
         x_label='Epochs',
         y_label='Loss',
-        plot_filename='loss_plot_conv2d_balance',
+        plot_filename='loss_plot_conv2d_balance_6',
         save=True
     )
     utils.print_plot(
@@ -133,6 +134,6 @@ def train_model(
         labels=['Train accuracy', 'Test accuracy'],
         x_label='Epochs',
         y_label='Accuracy',
-        plot_filename='accuracy_plot_conv2d_balance',
+        plot_filename='accuracy_plot_conv2d_balance_6',
         save=True
     )

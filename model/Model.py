@@ -101,24 +101,16 @@ class Conv2DSymbolDetector(nn.Module):
             return nn.Sequential(
                 nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel),
                 nn.ReLU(),
-                # nn.Dropout(0.2),
-                # nn.ReLU()
+                nn.Dropout(0.2),
+                nn.ReLU()
             )
 
-        # def max_pool():
-        #     return nn.Sequential(
-        #         nn.MaxPool2d(kernel_size=2),
-        #         nn.ReLU()
-        #     )
-
         self.conv_module_1 = basic(1, Conf.hidden_1, 5)
-        # self.pool_module_1 = max_pool()
-
         self.conv_module_2 = basic(Conf.hidden_1, Conf.hidden_2, 3)
-        # self.conv_module_3 = basic(Conf.hidden_2, Conf.hidden_3, 3)
-        self.conv_module_4 = basic(Conf.hidden_2, Conf.hidden_4, 3)
-        # self.conv_module_5 = basic(Conf.hidden_4, Conf.hidden_5, 3)
-        self.conv_module_6 = basic(Conf.hidden_4, Conf.flat_layer_features, 3)
+        self.conv_module_3 = basic(Conf.hidden_2, Conf.hidden_3, 3)
+        self.conv_module_4 = basic(Conf.hidden_3, Conf.hidden_4, 3)
+        self.conv_module_5 = basic(Conf.hidden_4, Conf.hidden_5, 3)
+        self.conv_module_6 = basic(Conf.hidden_5, Conf.flat_layer_features, 3)
 
         self.flatten = nn.Flatten()
 
@@ -132,17 +124,17 @@ class Conv2DSymbolDetector(nn.Module):
 
     def forward(self, x):
         module_1 = self.conv_module_1(x)
-        # module_1 = self.pool_module_1(module_1)
 
         module_2 = self.conv_module_2(module_1)
-        # module_3 = self.conv_module_3(module_2)
-        module_4 = self.conv_module_4(module_2)
-        # module_5 = self.conv_module_5(module_4)
-        module_6 = self.conv_module_6(module_4)
+        module_3 = self.conv_module_3(module_2)
+        module_4 = self.conv_module_4(module_3)
+        module_5 = self.conv_module_5(module_4)
+        module_6 = self.conv_module_6(module_5)
 
         linear = f.interpolate(module_6, size=(1, 1))
         linear = linear.view(x.size()[0], Conf.flat_layer_features)
         linear = self.flatten(linear)
-        linear = self.linear(linear)
 
-        return linear, module_6
+        logits = self.linear(linear)
+        probs = f.softmax(logits, dim=1)
+        return logits, probs
