@@ -1,7 +1,7 @@
 import math
 
 
-def explore_image(image, threshold=1):
+def explore_image(image, threshold=3):
     """
     The function explores the image extracting symbols with a simple bfs visit on non-white pixels (using a certain
     threshold for white since I noticed the pixels aren't always perfectly (255,255,255) ). The function then aggregates
@@ -42,7 +42,15 @@ def explore_image(image, threshold=1):
 
     symbols_return = []
     print("Estratti originali: ", (len(symbols_extracted)))
-    threshold = 30
+
+    threshold = 0
+    for symbol in symbols_extracted:
+        threshold += len(symbol[0])
+
+    threshold = int(threshold / len(symbols_extracted))
+
+    threshold = int(threshold / 5)
+
     for s in symbols_extracted:
         if len(s[0]) >= threshold:
             symbols_return.append(s)
@@ -153,7 +161,7 @@ def __process_dictionary(dictionary, symbols_extracted, avg_symbol_height):
     """
 
     # process the dictionary to exclude the fraction line, preventing it from being merged to a symbol by mistake
-    dictionary = __find_and_exclude_fraction_line(dictionary, symbols_extracted)
+    dictionary = __find_and_exclude_fraction_line(dictionary, symbols_extracted, avg_symbol_height)
 
     # using a set containing tuples of symbol ids sorted"
     to_be_merged = set()
@@ -222,7 +230,7 @@ def __process_dictionary(dictionary, symbols_extracted, avg_symbol_height):
     return symbols_to_return
 
 
-def __find_and_exclude_fraction_line(dictionary, symbols_extracted):
+def __find_and_exclude_fraction_line(dictionary, symbols_extracted, avg_symbol_height):
     """
     This function excludes symbols that are flat (with height <= 10 pixels) that have at least two other symbols in
     their column. This allows us to exclude fraction lines, to prevent them from being merged to a symbol. Of course,
@@ -239,10 +247,22 @@ def __find_and_exclude_fraction_line(dictionary, symbols_extracted):
 
         # calculate the height by delta_y of the bottom_most and top_most pixels
         symbol_height = symbols_extracted[key][4][1] - symbols_extracted[key][2][1]
+        symbol_width = symbols_extracted[key][3][0] - symbols_extracted[key][1][0]
 
         # if it's relatively flat and has at least two symbols in its column
-        if symbol_height <= 10 and len(dictionary[key]) >= 2:
-            keys_to_remove.append(key)
+        if symbol_height <= avg_symbol_height / 3 and len(dictionary[key]) >= 2:
+
+            # check if its width is greater than all of his neighbors
+            is_max = True
+            for val in dictionary[key]:
+                other_key = val[0]
+                other_width = symbols_extracted[other_key][3][0] - symbols_extracted[other_key][1][0]
+                if other_width > symbol_width:
+                    is_max = False
+
+            # if it is, it's a fraction line
+            if is_max:
+                keys_to_remove.append(key)
 
     dictionary_to_return = {}
     for key in dictionary.keys():
